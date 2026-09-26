@@ -188,14 +188,17 @@ export default function HomePage() {
           <h2 id="team" className="font-display text-h2 text-maroon">
             {copy.home.teamHeading}
           </h2>
-          <RecruitingGate
-            recruiting={recruiting}
-            statusAtBuild={recruitingAtBuild}
-            variants={{
-              open: <RecruitingBadge />,
-              "opening-soon": <RecruitingBadge />,
-            }}
-          />
+          {/* "closed" in the content file can't change by date, so nothing ships then. */}
+          {recruiting.status !== "closed" && (
+            <RecruitingGate
+              recruiting={recruiting}
+              statusAtBuild={recruitingAtBuild}
+              variants={{
+                open: <RecruitingBadge />,
+                "opening-soon": <RecruitingBadge />,
+              }}
+            />
+          )}
         </div>
         <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-8">
           {activeTeam.map((member) => (

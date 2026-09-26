@@ -74,22 +74,24 @@ export default function LinksPage() {
               {copy.links.member}
             </LinkButton>
           </li>
-          <RecruitingGate
-            recruiting={recruiting}
-            statusAtBuild={effectiveRecruitingStatus(new Date(BUILD_TIME))}
-            variants={{
-              open: (
-                <li>
-                  <LinkButton href="/team">{copy.links.applyTeam}</LinkButton>
-                </li>
-              ),
-              "opening-soon": (
-                <li>
-                  <LinkButton href="/team">{fill(copy.links.teamOpens, { date: opensOn })}</LinkButton>
-                </li>
-              ),
-            }}
-          />
+          {recruiting.status !== "closed" && (
+            <RecruitingGate
+              recruiting={recruiting}
+              statusAtBuild={effectiveRecruitingStatus(new Date(BUILD_TIME))}
+              variants={{
+                open: (
+                  <li>
+                    <LinkButton href="/team">{copy.links.applyTeam}</LinkButton>
+                  </li>
+                ),
+                "opening-soon": (
+                  <li>
+                    <LinkButton href="/team">{fill(copy.links.teamOpens, { date: opensOn })}</LinkButton>
+                  </li>
+                ),
+              }}
+            />
+          )}
           <li>
             <LinkButton href="/speak">{copy.links.speak}</LinkButton>
           </li>
