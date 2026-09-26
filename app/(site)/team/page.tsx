@@ -82,7 +82,8 @@ export default function TeamPage() {
           statusAtBuild={statusAtBuild}
           variants={{
             "opening-soon": recruitingDetails(false),
-            open: recruitingDetails(true),
+            // Without an application link recruiting can't be open, so don't ship that variant.
+            ...(recruiting.applyUrl ? { open: recruitingDetails(true) } : {}),
             closed: (
               <p className="mt-5 max-w-prose text-lead">
                 <InstagramText text={copy.team.closed} linkClassName="text-gold" />

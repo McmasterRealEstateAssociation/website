@@ -1,0 +1,7 @@
+# Keep line endings consistent (LF) for everyone who edits the site, on any OS.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.ttf binary
+*.woff2 binary
