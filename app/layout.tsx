@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Cinzel, Montserrat } from "next/font/google";
 import { copy, site } from "@/content/site";
@@ -49,7 +50,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en-CA" className={`${cinzel.variable} ${montserrat.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Vercel Web Analytics: first-party, cookie-free page views (free on the Hobby plan). */}
+        <Analytics />
+      </body>
     </html>
   );
 }
