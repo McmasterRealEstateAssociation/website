@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "photos": "node scripts/photos/prepare.mjs",
+    "qa:shots": "node scripts/qa/screenshots.mjs qa-shots",
+    "qa:switches": "node scripts/qa/switch-tests.mjs",
+    "graphics": "node scripts/graphics/generate.mjs"
   },
   "dependencies": {
     "next": "^16.3.6",
-    "playwright": "^1.63.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
@@ -19,8 +22,11 @@
     "@types/node": "^22.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "^16.3.6",
+    "playwright": "^1.63.0",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
