@@ -8,7 +8,6 @@ import { PersonRing } from "@/components/PersonRing";
 import { ButtonLink, Container, Rule, Section } from "@/components/ui";
 import { copy, recruiting, site, stats, team } from "@/content/site";
 import { eventPath, pastEvents, upcomingEvents } from "@/lib/events";
-import { baseOpenGraph } from "@/lib/metadata";
 import { effectiveRecruitingStatus } from "@/lib/recruiting";
 import { BUILD_TIME } from "@/lib/build-time";
 
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
   title: { absolute: copy.home.title },
   description: site.description,
   alternates: { canonical: "/" },
-  openGraph: { ...baseOpenGraph, title: copy.home.title, description: site.description, url: "/" },
+  // Open Graph and Twitter come from the root layout, which also attaches app/opengraph-image.
 };
 
 const organizationJsonLd = {

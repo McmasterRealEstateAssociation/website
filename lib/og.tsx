@@ -2,12 +2,18 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { MARK_PATH } from "@/components/brand/mark-paths";
+import { site } from "@/content/site";
 
 export const ogSize = { width: 1200, height: 630 };
 export const ogContentType = "image/png";
 
 const MAROON = "#7A003C";
+const PADDING_X = 88;
+const MARK_SIZE = 250;
+// The card width left for text: 1200 - padding on both sides - mark - gap.
+const TEXT_WIDTH = 1200 - PADDING_X * 2 - MARK_SIZE - 64;
 const GOLD = "#FDBF57";
+const CLUB_NAME = site.name;
 
 const fontDir = join(process.cwd(), "assets/fonts");
 const fonts = Promise.all([
@@ -34,7 +40,7 @@ export async function ogImage({
   lines?: string[];
 }) {
   const [cinzel, montserrat500, montserrat600] = await fonts;
-  const titleSize = title.length > 42 ? 58 : title.length > 26 ? 66 : 76;
+  const titleSize = title.length > 34 ? 56 : title.length > 22 ? 62 : 72;
   return new ImageResponse(
     (
       <div
@@ -44,14 +50,15 @@ export async function ogImage({
           display: "flex",
           alignItems: "center",
           background: MAROON,
-          padding: "0 88px",
+          padding: `0 ${PADDING_X}px`,
           fontFamily: "Montserrat",
           color: "white",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain <img> */}
-        <img src={markSrc} width={250} height={250} alt="" style={{ flexShrink: 0 }} />
-        <div style={{ display: "flex", flexDirection: "column", marginLeft: 72, flexGrow: 1 }}>
+        <img src={markSrc} width={MARK_SIZE} height={MARK_SIZE} alt="" style={{ flexShrink: 0 }} />
+        {/* A fixed width makes long titles and lines wrap instead of running off the card. */}
+        <div style={{ display: "flex", flexDirection: "column", marginLeft: 64, width: TEXT_WIDTH }}>
           {kicker && (
             <div style={{ display: "flex", color: GOLD, fontSize: 26, fontWeight: 600, marginBottom: 18 }}>{kicker}</div>
           )}
@@ -72,9 +79,10 @@ export async function ogImage({
               {line}
             </div>
           ))}
-          <div style={{ display: "flex", fontSize: 22, fontWeight: 600, marginTop: 30, color: GOLD }}>
-            McMaster Real Estate Association
-          </div>
+          {/* Sign the card with the club name, unless it's already the title. */}
+          {title !== CLUB_NAME && (
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 600, marginTop: 30, color: GOLD }}>{CLUB_NAME}</div>
+          )}
         </div>
       </div>
     ),
