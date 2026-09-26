@@ -1,39 +1,55 @@
-import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Cinzel, Montserrat } from "next/font/google";
+import { copy, site } from "@/content/site";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+// Both are variable fonts: one file each covers every weight the site uses.
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
   subsets: ["latin"],
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "McMaster Real Estate Association",
-  description:
-    "MREA connects McMaster students with the real estate industry through expert speakers, networking, and education.",
-  openGraph: {
-    title: "McMaster Real Estate Association",
-    description:
-      "MREA connects McMaster students with the real estate industry through expert speakers, networking, and education.",
-    siteName: "MREA",
+  metadataBase: new URL(site.url),
+  title: {
+    default: copy.home.title,
+    template: `%s | ${site.name} (${site.shortName})`,
   },
+  description: site.description,
+  applicationName: `${site.name} (${site.shortName})`,
+  openGraph: {
+    type: "website",
+    siteName: `${site.name} (${site.shortName})`,
+    locale: "en_CA",
+    title: copy.home.title,
+    description: site.description,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: copy.home.title,
+    description: site.description,
+  },
+  alternates: { canonical: "/" },
+  formatDetection: { telephone: false },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: "#7A003C",
+  colorScheme: "light",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="min-h-screen antialiased">{children}</body>
+    <html lang="en-CA" className={`${cinzel.variable} ${montserrat.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
