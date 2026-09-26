@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# mcmastermrea.com
 
-## Getting Started
+The website of the **McMaster Real Estate Association (MREA)**, a student-run club at McMaster University in Hamilton, Ontario.
 
-First, run the development server:
+Live at **https://mcmastermrea.com**.
+
+## Where everything lives
+
+Everything is owned by the club, not by any one person:
+
+| What | Where |
+|---|---|
+| Code | GitHub, club account **McmasterRealEstateAssociation**, repo [`website`](https://github.com/McmasterRealEstateAssociation/website) |
+| Hosting | Vercel, club team **MREA's projects**, project **mcmastermrea** (free Hobby plan) |
+| Domain | **mcmastermrea.com**, registered through the club's Vercel team |
+| Sign-ins | Both accounts sign in with the club's GitHub account (McmasterMREA@outlook.com) |
+
+Every push to `main` deploys to production automatically, usually within a minute or two.
+
+`www.mcmastermrea.com`, `mcmastermrea.vercel.app` and the old address `mrea-website.vercel.app` all redirect to https://mcmastermrea.com.
+
+## How it's built
+
+- Next.js (App Router), TypeScript and Tailwind CSS 4. Every page is static; there's no database, login or server code.
+- **All text, links, events, the team and recruiting live in one file: [`content/site.ts`](content/site.ts).** Components only format that data.
+- Sign-ups use Microsoft Forms, and event registration uses Eventbrite.
+- Brand: Heritage Maroon `#7A003C`, Heritage Gold `#FDBF57`, Cinzel for headlines, Montserrat for everything else. The full brand guide is `C:\MREA\brand-kit\BRAND.md` (outside this repo).
+
+## Updating the site
+
+See **[HOW-TO-UPDATE.md](HOW-TO-UPDATE.md)**. It has step-by-step recipes for announcing events, recaps, the team, recruiting and more, each with a one-line prompt you can give Claude Code.
+
+## Running it locally
+
+You need Node.js 20.9 or newer.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Before pushing, run the checks:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run lint
+npm run build
+npx playwright install chromium    # once per computer
+npx next start -p 3100             # in a second terminal, then:
+npm run qa:shots                   # screenshots of every page into qa-shots/
+npm run qa:switches                # rebuilds with each content switch flipped (stop the server first)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Other scripts
 
-## Learn More
+| Command | What it does |
+|---|---|
+| `npm run photos -- <folder> <files...>` | Resizes photos and strips their metadata into `content/photos/<folder>/` |
+| `npm run graphics -- <event-slug>` | Renders Instagram, Eventbrite and LinkedIn graphics for an event into `C:\MREA\brand-kit\events\` |
 
-To learn more about Next.js, take a look at the following resources:
+## Contact
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+McMaster Real Estate Association: [McmasterMREA@outlook.com](mailto:McmasterMREA@outlook.com)
