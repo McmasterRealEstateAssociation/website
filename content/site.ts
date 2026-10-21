@@ -495,11 +495,11 @@ export const team: TeamMember[] = [
 ];
 
 export const recruiting: Recruiting = {
-  status: "opening-soon",
+  status: "open",
   season: "2026–27",
-  opensOn: "2026-10-07",
-  closesOn: "2026-10-25",
-  applyUrl: "",
+  opensOn: "2026-10-21",
+  closesOn: "2026-11-04",
+  applyUrl: "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=B2M3RCm0rUKMJSjNSW9HcsYDRgK1N39JshRtC7O4igFUOEpKOU01NFEzWVJTTTBEN1E4QVdLUlhLSS4u",
   roles: [
     {
       title: "VP Marketing",

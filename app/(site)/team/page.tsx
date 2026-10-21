@@ -28,7 +28,7 @@ export default function TeamPage() {
   const recruitingDetails = (withApply: boolean) => (
     <>
       <p className="mt-5 text-lead font-medium">{fill(copy.team.openingSoonLead, { season: recruiting.season })}</p>
-      <p className="mt-2 text-white/90">{windowLine}</p>
+      {!withApply && <p className="mt-2 text-white/90">{windowLine}</p>}
       <h3 className="mt-12 text-h3 font-semibold text-gold">{copy.team.rolesHeading}</h3>
       <ul className="mt-4 border-t border-gold/40">
         {recruiting.roles.map((role) => (
