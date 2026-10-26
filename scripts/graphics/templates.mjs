@@ -1,12 +1,23 @@
-// HTML templates for event graphics. Every template gets a `model` (see generate.mjs) and
-// returns a full HTML document sized exactly to its canvas.
+// HTML templates for event and recruiting graphics. Every template gets a `model` (see
+// generate.mjs) and returns a full HTML document sized exactly to its canvas.
 
 const MAROON = "#7A003C";
 const MAROON_DEEP = "#5C002D";
 const GOLD = "#FDBF57";
 
+/** Curly quotes and apostrophes, as a typesetter would set them. */
+const smart = (s) =>
+  s
+    .replace(/(^|[\s([{])'/g, "$1\u2018")
+    .replace(/'/g, "\u2019")
+    .replace(/(^|[\s([{])"/g, "$1\u201C")
+    .replace(/"/g, "\u201D");
+
 const esc = (s) =>
-  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  smart(String(s)).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Display type: the last two words stay together, so a heading never ends on one short word. */
+const title = (s) => esc(s).replace(/ (\S+)$/, "\u00A0$1");
 
 /** Splits "One. Two. Three." into ["One.", "Two.", "Three."] so lists read as lines. */
 export const sentences = (text) => text.split(/(?<=[.!?])\s+/).filter(Boolean);
@@ -27,9 +38,31 @@ body { background: ${MAROON}; color: #fff; font-family: Montserrat, sans-serif; 
 .sig svg { flex-shrink: 0; }
 .sig span { font-family: Cinzel, serif; font-weight: 600; letter-spacing: 0.03em; }
 .ground { position: absolute; left: 0; right: 0; height: 2px; background: ${GOLD}; }
+[data-fit] { display: flex; flex-direction: column; justify-content: center; }
 ${extraCss}
-</style></head><body>${body}</body></html>`;
+</style>
+<script>
+  // Shrinks the content of every [data-fit] box until it fits, so long copy never collides
+  // with the drawing or runs off the canvas. Returns the boxes that still overflow.
+  window.fitContent = () => {
+    const overflowing = [];
+    for (const box of document.querySelectorAll("[data-fit]")) {
+      const inner = box.firstElementChild;
+      let zoom = 1;
+      while (inner.getBoundingClientRect().height > box.clientHeight + 0.5 && zoom > 0.7) {
+        zoom -= 0.02;
+        inner.style.zoom = zoom.toFixed(2);
+      }
+      if (inner.getBoundingClientRect().height > box.clientHeight + 0.5) overflowing.push(box.dataset.fit);
+    }
+    return overflowing;
+  };
+</script></head><body>${body}</body></html>`;
 }
+
+/** A box whose content is centred vertically and shrunk to fit if it's too tall. */
+const fitBox = (name, { left, right, top, height, width }, content) =>
+  `<div data-fit="${name}" style="position:absolute;left:${left}px;${right !== undefined ? `right:${right}px;` : ""}${width !== undefined ? `width:${width}px;` : ""}top:${top}px;height:${height}px"><div>${content}</div></div>`;
 
 /** The complete mark as inline SVG. */
 const mark = (markPath, size, color = GOLD) =>
@@ -59,12 +92,24 @@ function elevation(parts, width, { stroke = 2.2, guides = true, groundOverhang =
 }
 
 /** Gold ring with the speaker's photo. */
-const ring = (photo, size) =>
-  `<div style="width:${size}px;height:${size}px;border-radius:50%;border:4px solid ${GOLD};padding:10px;flex-shrink:0">
+const ring = (photo, size, { border = 4, gap = 10 } = {}) =>
+  `<div style="width:${size}px;height:${size}px;border-radius:50%;border:${border}px solid ${GOLD};padding:${gap}px;flex-shrink:0">
      <div style="width:100%;height:100%;border-radius:50%;background:url(${photo}) center 30%/cover"></div></div>`;
 
 const signature = (m, size = 64, font = 24) =>
   `<div class="sig">${mark(m.markPath, size)}<span style="font-size:${font}px">${esc(m.clubName)}</span></div>`;
+
+/** A list with a short gold dash before each item and gold hairlines between items. */
+const dashList = (items, { font, pad, dash = 28, gap = 32 }) => `
+  <div style="border-top:2px solid rgba(253,191,87,.55)">
+    ${items
+      .map(
+        (it) => `<div style="display:flex;gap:${gap}px;align-items:baseline;padding:${pad}px 0;border-bottom:2px solid rgba(253,191,87,.55)">
+           <span style="width:${dash}px;height:3px;background:${GOLD};flex-shrink:0;transform:translateY(-${Math.round(font * 0.3)}px)"></span>
+           <span style="font-size:${font}px;line-height:1.25;font-weight:500;text-wrap:balance">${esc(it)}</span></div>`,
+      )
+      .join("")}
+  </div>`;
 
 /* ---------------------------------------------------------------------------------------- */
 /* Instagram carousel, 1080 x 1350                                                           */
@@ -83,10 +128,11 @@ export function carouselSlide(m, slide, index, total) {
   let content = "";
 
   if (slide.kind === "headline") {
+    // Long headlines go a size down so their key phrases stay on one line.
     content = `
-      <div class="display" style="font-size:104px;line-height:1.02">${sentences(slide.headline).map((l) => `<div>${esc(l)}</div>`).join("")}</div>
+      <div class="display" style="font-size:${slide.headline.length > 40 ? 96 : 108}px;line-height:1.02">${sentences(slide.headline).map((l) => `<div>${title(l)}</div>`).join("")}</div>
       <div class="rule" style="margin-top:44px"></div>
-      <div class="gold" style="margin-top:30px;font-size:38px;font-weight:600">${esc(slide.smallLine)}</div>`;
+      ${slide.smallLine ? `<div class="gold" style="margin-top:30px;font-size:38px;font-weight:600">${esc(slide.smallLine)}</div>` : ""}`;
   } else if (slide.kind === "speaker") {
     const [first, ...rest] = slide.lines;
     const comma = first.indexOf(",");
@@ -94,35 +140,52 @@ export function carouselSlide(m, slide, index, total) {
     const org = comma > 0 ? first.slice(comma + 1).trim() : "";
     const facts = rest.flatMap(sentences);
     content = `
-      ${m.speakerPhoto ? `<div style="margin-bottom:56px">${ring(m.speakerPhoto, 320)}</div>` : ""}
-      <div class="display" style="font-size:${m.speakerPhoto ? 100 : 124}px;line-height:1.02">${esc(name)}</div>
+      ${m.speakerPhoto ? `<div style="margin-bottom:52px">${ring(m.speakerPhoto, 360)}</div>` : ""}
+      <div class="display" style="font-size:${m.speakerPhoto ? 100 : 124}px;line-height:1.02">${title(name)}</div>
       ${org ? `<div class="gold" style="margin-top:22px;font-size:44px;font-weight:600">${esc(org)}</div>` : ""}
-      <div class="rule" style="margin-top:56px"></div>
-      <div style="margin-top:34px;font-size:52px;line-height:1.3;font-weight:500">${facts.map((f) => `<div style="margin-top:18px;text-wrap:balance">${esc(f)}</div>`).join("")}</div>`;
+      <div class="rule" style="margin-top:52px"></div>
+      <div style="margin-top:30px;font-size:52px;line-height:1.3;font-weight:500">${facts.map((f) => `<div style="margin-top:18px;text-wrap:balance">${esc(f)}</div>`).join("")}</div>`;
   } else if (slide.kind === "list") {
     content = `
-      <div class="display" style="font-size:88px;line-height:1.05;text-wrap:balance">${esc(slide.heading)}</div>
-      <div style="margin-top:52px;border-top:2px solid rgba(253,191,87,.55)">
-        ${slide.items
+      <div class="display" style="font-size:88px;line-height:1.05">${title(slide.heading)}</div>
+      <div style="margin-top:52px">${dashList(slide.items, { font: 46, pad: 26 })}</div>`;
+  } else if (slide.kind === "roles") {
+    // Each role: its title, then its one-line description.
+    content = `
+      <div class="display" style="font-size:88px;line-height:1.05">${title(slide.heading)}</div>
+      <div style="margin-top:48px;border-top:2px solid rgba(253,191,87,.55)">
+        ${slide.roles
           .map(
-            (it) => `<div style="display:flex;gap:32px;align-items:baseline;padding:26px 0;border-bottom:2px solid rgba(253,191,87,.55)">
-               <span style="width:28px;height:3px;background:${GOLD};flex-shrink:0;transform:translateY(-14px)"></span>
-               <span style="font-size:46px;line-height:1.25;font-weight:500;text-wrap:balance">${esc(it)}</span></div>`,
+            (r) => `<div style="padding:28px 0 30px;border-bottom:2px solid rgba(253,191,87,.55)">
+               <div class="gold" style="font-size:44px;line-height:1.2;font-weight:600">${esc(r.title)}</div>
+               <div style="margin-top:12px;font-size:35px;line-height:1.4;color:rgba(255,255,255,.92);text-wrap:balance">${esc(r.description)}</div></div>`,
           )
           .join("")}
       </div>`;
   } else if (slide.kind === "details") {
+    // The gold rule comes before the call to action: after the gold second line when more lines
+    // follow ("5:30 PM, Room..." then "Free. Register..."), otherwise before the second line.
+    const [first, second, ...rest] = slide.lines;
+    const ruleFirst = rest.length === 0 && !slide.footnote;
+    const rule = `<div class="rule" style="margin-top:50px"></div>`;
     content = `
-      <div class="display" style="font-size:100px;line-height:1.04">${esc(slide.lines[0])}</div>
-      <div class="gold" style="margin-top:26px;font-size:50px;font-weight:600">${esc(slide.lines[1] ?? "")}</div>
-      <div class="rule" style="margin-top:50px"></div>
-      ${slide.lines.slice(2).map((l) => `<div style="margin-top:40px;font-size:50px;line-height:1.25;font-weight:600">${esc(l)}</div>`).join("")}
-      ${slide.footnote ? `<div style="margin-top:36px;font-size:36px;line-height:1.45;color:rgba(255,255,255,.9);max-width:860px">${esc(slide.footnote)}</div>` : ""}`;
+      <div class="display" style="font-size:100px;line-height:1.04">${title(first)}</div>
+      ${ruleFirst ? rule : ""}
+      ${second ? `<div class="gold" style="margin-top:${ruleFirst ? 40 : 26}px;font-size:50px;font-weight:600">${esc(second)}</div>` : ""}
+      ${ruleFirst ? "" : rule}
+      ${rest.map((l) => `<div style="margin-top:40px;font-size:50px;line-height:1.25;font-weight:600">${esc(l)}</div>`).join("")}
+      ${
+        slide.footnote
+          ? `<div style="margin-top:30px;font-size:36px;line-height:1.45;color:rgba(255,255,255,.9);max-width:860px">${sentences(slide.footnote)
+              .map((s) => `<div style="margin-top:10px;text-wrap:pretty">${esc(s)}</div>`)
+              .join("")}</div>`
+          : ""
+      }`;
   }
 
   const body = `
     <div style="position:absolute;left:${PAD}px;top:${PAD}px">${signature(m)}</div>
-    <div style="position:absolute;left:${PAD}px;right:${PAD}px;top:${mainTop}px;height:${mainBottom - mainTop}px;display:flex;flex-direction:column;justify-content:center">${content}</div>
+    ${fitBox("main", { left: PAD, right: PAD, top: mainTop, height: mainBottom - mainTop }, content)}
     ${hasDrawing ? `<div style="position:absolute;right:${PAD - 24}px;top:${footerTop - drawingHeight - 34}px">${elevation(m.parts, drawingWidth)}</div>` : ""}
     <div style="position:absolute;left:${PAD}px;right:${PAD}px;top:${footerTop}px;display:flex;justify-content:space-between;font-size:26px;font-weight:600;color:rgba(255,255,255,.8)">
       <span>@${esc(m.handle)}</span><span>${index + 1} / ${total}</span></div>`;
@@ -130,62 +193,122 @@ export function carouselSlide(m, slide, index, total) {
 }
 
 /* ---------------------------------------------------------------------------------------- */
-/* Instagram story, 1080 x 1920 (keeps text out of the top 250 px and bottom 340 px)         */
+/* Instagram stories, 1080 x 1920 (text stays out of the top 250 px and bottom 340 px)      */
 /* ---------------------------------------------------------------------------------------- */
 
-export function story(m) {
-  const W = 1080, H = 1920, PAD = 96;
-  // Instagram covers roughly the top 250 px and bottom 340 px with its own UI. Text stays in
-  // between; the drawing stands on a ground line just above the bottom zone.
-  const ground = H - 340;
-  const drawingWidth = 500;
-  const drawingHeight = Math.round(drawingWidth * 0.596);
-  const contentBottom = ground - drawingHeight + 20;
-  const rows = m.facts
+const STORY = { W: 1080, H: 1920, PAD: 96, TOP: 380, GROUND: 1920 - 340, DRAWING: 480 };
+
+/** The parts every story shares: the signature at the top and the drawing on its ground line. */
+function storyPage(m, content) {
+  const { W, H, PAD, TOP, GROUND, DRAWING } = STORY;
+  const drawingHeight = Math.round(DRAWING * 0.596);
+  const contentBottom = GROUND - drawingHeight + 10;
+  const body = `
+    <div style="position:absolute;left:${PAD}px;top:262px">${signature(m, 68, 25)}</div>
+    ${fitBox("story", { left: PAD, right: PAD, top: TOP, height: contentBottom - TOP }, content)}
+    <div style="position:absolute;right:${PAD - 24}px;top:${GROUND - drawingHeight + 30}px">${elevation(m.parts, DRAWING)}</div>`;
+  return page({ width: W, height: H, fonts: m.fonts, body });
+}
+
+/** Labelled rows, like the spec sheet on the website's event pages. */
+const factRows = (facts) =>
+  `<div style="border-top:2px solid rgba(253,191,87,.5)">${facts
     .map(
-      (f) => `<div style="display:grid;grid-template-columns:170px 1fr;gap:24px;padding:22px 0;border-bottom:2px solid rgba(253,191,87,.5)">
+      (f) => `<div style="display:grid;grid-template-columns:170px 1fr;gap:24px;padding:20px 0;border-bottom:2px solid rgba(253,191,87,.5)">
          <span style="font-size:23px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:${GOLD};padding-top:9px">${esc(f.label)}</span>
          <span style="font-size:38px;line-height:1.3;font-weight:600">${esc(f.value)}</span></div>`,
     )
-    .join("");
-  const body = `
-    <div style="position:absolute;left:${PAD}px;top:262px">${signature(m, 68, 25)}</div>
-    <div style="position:absolute;left:${PAD}px;right:${PAD}px;top:380px;height:${contentBottom - 380}px;display:flex;flex-direction:column;justify-content:center">
-      <div class="gold" style="font-size:34px;font-weight:600">${esc(m.format)}</div>
-      <div class="display" style="margin-top:18px;font-size:100px;line-height:1.04">${esc(m.title)}</div>
-      ${m.subtitle ? `<div style="margin-top:26px;font-size:40px;line-height:1.35">${esc(m.subtitle)}</div>` : ""}
-      <div style="margin-top:46px;border-top:2px solid rgba(253,191,87,.5)">${rows}</div>
-      <div style="margin-top:40px;font-size:38px;font-weight:600">${esc(m.registerLine)}</div>
-    </div>
-    <div style="position:absolute;right:${PAD - 24}px;top:${ground - drawingHeight + 30}px">${elevation(m.parts, drawingWidth)}</div>`;
-  return page({ width: W, height: H, fonts: m.fonts, body });
+    .join("")}</div>`;
+
+export function story(m) {
+  // With a speaker photo, the speaker's ring, name and title stand in for the subtitle, and the
+  // price joins the closing line, so everything fits above the drawing.
+  const speaker = m.speakerPhoto
+    ? `<div style="margin-top:44px;display:flex;align-items:center;gap:40px">
+         ${ring(m.speakerPhoto, 230, { gap: 8 })}
+         <div><div class="display" style="font-size:54px;line-height:1.05">${title(m.speakerName)}</div>
+           ${m.speakerTitle ? `<div class="gold" style="margin-top:14px;font-size:32px;line-height:1.3;font-weight:600;text-wrap:balance">${esc(m.speakerTitle)}</div>` : ""}</div>
+       </div>`
+    : m.subtitle
+      ? `<div style="margin-top:26px;font-size:40px;line-height:1.35;text-wrap:balance">${esc(m.subtitle)}</div>`
+      : "";
+  const facts = m.speakerPhoto ? m.facts.filter((f) => f.label !== "Price") : m.facts;
+  const closing = m.speakerPhoto ? `${m.price}. ${m.registerLine}` : m.registerLine;
+  return storyPage(
+    m,
+    `<div class="gold" style="font-size:34px;font-weight:600">${esc(m.format)}</div>
+     <div class="display" style="margin-top:18px;font-size:100px;line-height:1.04">${title(m.title)}</div>
+     ${speaker}
+     <div style="margin-top:46px">${factRows(facts)}</div>
+     <div style="margin-top:38px;font-size:38px;font-weight:600">${esc(closing)}</div>`,
+  );
+}
+
+export function recruitingStory(m) {
+  return storyPage(
+    m,
+    `<div class="display" style="font-size:100px;line-height:1.04">${title(m.headline)}</div>
+     <div class="rule" style="margin-top:46px"></div>
+     <div class="gold" style="margin-top:44px;font-size:34px;font-weight:600">${esc(m.rolesHeading)}</div>
+     <div style="margin-top:22px">${dashList(m.roles.map((r) => r.title), { font: 42, pad: 22, dash: 24, gap: 26 })}</div>
+     <div style="margin-top:46px;font-size:46px;line-height:1.3;font-weight:600">${esc(m.apply)}</div>
+     <div class="gold" style="margin-top:10px;font-size:40px;font-weight:600">${esc(m.linkInBio)}</div>`,
+  );
 }
 
 /* ---------------------------------------------------------------------------------------- */
 /* Wide banners: Eventbrite 2160 x 1080 and LinkedIn 1200 x 627                              */
 /* ---------------------------------------------------------------------------------------- */
 
-export function wideBanner(m, { width, height }) {
-  // Designed on a 2160 x 1080 grid and scaled: text column on the left, the elevation on the
-  // right, both standing on one ground line that runs the full width.
+/**
+ * Designed on a 2160 x 1080 grid and scaled: the text column on the left, the speaker's photo
+ * or the elevation on the right, with one ground line running the full width.
+ */
+function widePage(m, { width, height }, textColumn, { photo } = {}) {
   const s = width / 2160;
   const px = (n) => Math.round(n * s);
   const PAD = px(150);
   const ground = height - px(150);
   const drawingWidth = px(700);
   const drawingHeight = Math.round(drawingWidth * 0.596);
+  const ringSize = px(600);
+  const art = photo
+    ? `<div style="position:absolute;right:${px(170)}px;top:${Math.round((ground - ringSize) / 2 + px(10))}px">${ring(photo, ringSize, { border: Math.max(3, px(6)), gap: px(16) })}</div>
+       <div class="ground" style="top:${ground}px;height:${Math.max(1.5, px(2.6))}px"></div>`
+    : `<div style="position:absolute;right:${px(130)}px;top:${ground - drawingHeight + Math.round(drawingWidth * 0.055)}px">${elevation(m.parts, drawingWidth, { stroke: Math.max(1.4, 2.2 * s) })}</div>`;
   const body = `
     <div style="position:absolute;left:${PAD}px;top:${px(110)}px">${signature(m, px(84), px(30))}</div>
-    <div style="position:absolute;left:${PAD}px;top:${px(250)}px;width:${px(1080)}px;height:${ground - px(250) - px(40)}px;display:flex;flex-direction:column;justify-content:center">
+    ${fitBox("text", { left: PAD, width: px(photo ? 1150 : 1080), top: px(264), height: ground - px(264) - px(40) }, textColumn(px))}
+    ${art}`;
+  return page({ width, height, fonts: m.fonts, body });
+}
+
+export function wideBanner(m, size) {
+  return widePage(
+    m,
+    size,
+    (px) => `
       <div class="gold" style="font-size:${px(40)}px;font-weight:600">${esc(m.format)}</div>
-      <div class="display" style="margin-top:${px(20)}px;font-size:${px(112)}px;line-height:1.04">${esc(m.title)}</div>
-      ${m.subtitle ? `<div style="margin-top:${px(26)}px;font-size:${px(46)}px;line-height:1.3">${esc(m.subtitle)}</div>` : ""}
+      <div class="display" style="margin-top:${px(20)}px;font-size:${px(108)}px;line-height:1.04">${title(m.title)}</div>
+      ${m.subtitle ? `<div style="margin-top:${px(24)}px;font-size:${px(44)}px;line-height:1.3;text-wrap:balance">${esc(m.subtitle)}</div>` : ""}
       <div class="rule" style="margin-top:${px(44)}px;width:${px(96)}px;height:${Math.max(3, px(5))}px"></div>
       <div style="margin-top:${px(36)}px;font-size:${px(42)}px;line-height:1.4;font-weight:600">${esc(m.dateTimeLine)}</div>
-      <div style="margin-top:${px(6)}px;font-size:${px(38)}px;line-height:1.4;color:rgba(255,255,255,.88)">${esc(m.placeLine)}</div>
-    </div>
-    <div style="position:absolute;right:${px(130)}px;top:${ground - drawingHeight + Math.round(drawingWidth * 0.055)}px">${elevation(m.parts, drawingWidth, { stroke: Math.max(1.4, 2.2 * s) })}</div>`;
-  return page({ width, height, fonts: m.fonts, body });
+      <div style="margin-top:${px(6)}px;font-size:${px(38)}px;line-height:1.4;color:rgba(255,255,255,.88)">${esc(m.placeLine)}</div>`,
+    { photo: m.speakerPhoto },
+  );
+}
+
+export function recruitingBanner(m, size) {
+  return widePage(
+    m,
+    size,
+    (px) => `
+      <div class="display" style="font-size:${px(104)}px;line-height:1.04">${title(m.headline)}</div>
+      <div class="rule" style="margin-top:${px(40)}px;width:${px(96)}px;height:${Math.max(3, px(5))}px"></div>
+      <div style="margin-top:${px(34)}px;font-size:${px(40)}px;line-height:1.45;font-weight:600">${m.roles.map((r) => `<div>${esc(r.title)}</div>`).join("")}</div>
+      <div style="margin-top:${px(30)}px;font-size:${px(40)}px;line-height:1.4;color:rgba(255,255,255,.9)">${esc(m.apply)}</div>
+      <div class="gold" style="font-size:${px(40)}px;line-height:1.4;font-weight:600">${esc(m.teamPage)}</div>`,
+  );
 }
 
 export const colors = { MAROON, MAROON_DEEP, GOLD };

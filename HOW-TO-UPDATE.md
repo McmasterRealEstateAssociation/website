@@ -13,7 +13,7 @@ After any change, wait two minutes and check https://mcmastermrea.com.
 
 - **Only publish what's true and confirmed.** No invented numbers, testimonials, partners or attendance figures. If something isn't confirmed, leave the field blank (`""`) and the site hides it.
 - **Club-first and brokerage-neutral.** No personal businesses, and a brokerage appears only as a speaker's affiliation.
-- **Times are Toronto time**, written with their offset: `-04:00` from March to early November (EDT), `-05:00` from November to March (EST). For example, `"2026-10-07T18:00:00-04:00"` is 6:00 PM on October 7, 2026.
+- **Times are Toronto time**, written with their offset: `-04:00` from March to early November (EDT), `-05:00` from November to March (EST). For example, `"2026-11-18T18:00:00-05:00"` is 6:00 PM on November 18, 2026.
 - Keep the quotes, commas and brackets exactly as they are around the text you change. If the site doesn't update, the build probably failed: ask Claude Code to "check the last Vercel build and fix it".
 
 ---
@@ -42,7 +42,7 @@ An event appears on the site only when its `status` is `"announced"`. While it's
     status: "announced",
     ...
     location: { room: "MDCL 1105", building: "McMaster University" },
-    rsvpUrl: "https://www.eventbrite.ca/e/six-figures-in-your-early-20s-tickets-1234567890",
+    rsvpUrl: "https://www.eventbrite.ca/e/starting-young-in-sales-tickets-1234567890",
 ```
 
 **For a brand-new event,** copy an existing event's whole `{ ... }` block, paste it at the top of the `events` list, and change every field. The `slug` becomes the page address: use `year-month-short-name`, for example `"2026-11-mortgage-basics"` for `mcmastermrea.com/events/2026-11-mortgage-basics`.
@@ -54,7 +54,7 @@ Once it's announced, the site automatically:
 - hides the RSVP button once the event's `end` time has passed, with no update needed.
 
 **Claude Code prompt:**
-> Announce event 2026-10-leo-puskar using HOW-TO-UPDATE.md: room MDCL 1105, Eventbrite link https://www.eventbrite.ca/e/…, then run the checks, push, and regenerate its graphics.
+> Announce event 2026-11-leo-puskar using HOW-TO-UPDATE.md: room MDCL 1105, Eventbrite link https://www.eventbrite.ca/e/…, then run the checks, push, and regenerate its graphics.
 
 ## 2. Confirm headshots
 
@@ -63,7 +63,7 @@ For events offering free LinkedIn headshots, the headshot highlight and the "and
 **Field:** `headshotsConfirmed: true` on the event.
 
 **Claude Code prompt:**
-> Headshots are confirmed for 2026-10-leo-puskar. Set headshotsConfirmed to true, push, and regenerate its graphics.
+> Headshots are confirmed for 2026-11-leo-puskar. Set headshotsConfirmed to true, push, and regenerate its graphics.
 
 ## 3. Mark an event done, and add a recap and photos
 
@@ -71,12 +71,12 @@ After an event ends, the RSVP button disappears by itself. To turn the page into
 
 1. Prepare the photos. This resizes them and strips hidden location data:
    ```
-   npm run photos -- 2026-10-leo-puskar "C:\path\to\photo1.jpg" "C:\path\to\photo2.jpg"
+   npm run photos -- 2026-11-leo-puskar "C:\path\to\photo1.jpg" "C:\path\to\photo2.jpg"
    ```
-   They're saved in `content/photos/2026-10-leo-puskar/`. Pick 6–12 sharp, well-lit photos of the speakers, the room and the team. Avoid close-ups of individual attendees.
+   They're saved in `content/photos/2026-11-leo-puskar/`. Pick 6–12 sharp, well-lit photos of the speakers, the room and the team. Avoid close-ups of individual attendees.
 2. At the top of `content/site.ts`, add one import line per photo:
    ```ts
-   import leoRoom from "./photos/2026-10-leo-puskar/img-1234.jpg";
+   import leoRoom from "./photos/2026-11-leo-puskar/img-1234.jpg";
    ```
 3. On the event, set `status: "past"` and add a `recap`:
    ```ts
@@ -92,7 +92,7 @@ After an event ends, the RSVP button disappears by itself. To turn the page into
 The event moves to "Past events", shows the recap and gallery, and its speakers appear under "Past speakers" on the Speak page.
 
 **Claude Code prompt:**
-> Mark 2026-10-leo-puskar as past. Recap: "…". Photos are in C:\path\to\folder. Pick the best 6–12, prepare them, write alt text by looking at each one, then push.
+> Mark 2026-11-leo-puskar as past. Recap: "…". Photos are in C:\path\to\folder. Pick the best 6–12, prepare them, write alt text by looking at each one, then push.
 
 ## 4. Update the team and their photos
 
@@ -133,6 +133,8 @@ How the site behaves:
 - It **switches to open by itself** on `opensOn` once `applyUrl` is set, showing an "Apply now" button, with no update needed on the day.
 - After `closesOn` it shows as **closed**. Setting `status: "closed"` closes it at any time.
 
+For recruiting graphics (Instagram and LinkedIn), see section 8.
+
 **Claude Code prompts:**
 > Recruiting: the application form is https://forms.office.com/… Set applyUrl and push.
 
@@ -164,16 +166,28 @@ The address is set in one place: `site.url` in `content/site.ts`. It feeds every
 **Claude Code prompt:**
 > We're moving the site to https://newdomain.ca. Update site.url, check the new domain in Vercel is primary with the old one redirecting, regenerate the QR codes, and push.
 
-## 8. Make the event graphics
+## 8. Make the event and recruiting graphics
 
+**Event graphics:**
 ```
-npm run graphics -- 2026-10-leo-puskar
+npm run graphics -- 2026-11-leo-puskar
 ```
 
-This renders the Instagram carousel (from the event's `promo.carousel`), an Instagram story, an Eventbrite banner and a LinkedIn image into `C:\MREA\brand-kit\events\<event>\`. Draft events go into a `preview\` subfolder so nobody posts them by mistake. Speaker photos appear in a gold ring when the speaker has one; headshots are mentioned only once they're confirmed.
+This renders the Instagram carousel (from the event's `promo.carousel`), an Instagram story, an Eventbrite banner and a LinkedIn image into `C:\MREA\brand-kit\events\<event>\`. Draft events go into a `preview\` subfolder so nobody posts them by mistake. When the speaker has a photo, it appears in a gold ring on the carousel, the story and the Eventbrite and LinkedIn images. Headshots are mentioned only once they're confirmed.
 
-**Claude Code prompt:**
-> Regenerate the graphics for 2026-10-leo-puskar and show me the carousel.
+**Recruiting graphics:**
+```
+npm run graphics -- recruiting
+```
+
+This renders a three-slide Instagram carousel (the headline, the open roles, how to apply), an Instagram story and a LinkedIn image into `C:\MREA\brand-kit\recruiting-<year>\`. The season, deadline and roles come from the `recruiting` block and the wording from `recruitingPromo` just below it, so the graphics always match the site. If recruiting hasn't opened yet they go into a `preview\` subfolder; if it's closed, nothing is made.
+
+If some text is too long for its space, the generator shrinks it to fit, and warns you when it can't. Shorten that text in `content/site.ts`.
+
+**Claude Code prompts:**
+> Regenerate the graphics for 2026-11-leo-puskar and show me the carousel.
+
+> Make the recruiting graphics and show me the carousel.
 
 ## Checks before every push
 

@@ -19,6 +19,7 @@ import janAudience from "./photos/2026-01-brokerage-built-from-scratch/audience.
 import janRoomWide from "./photos/2026-01-brokerage-built-from-scratch/room-wide.jpg";
 import nicPortrait from "./photos/2026-01-brokerage-built-from-scratch/portrait-nic-von-bredow.jpg";
 import staceyPortrait from "./photos/2026-01-brokerage-built-from-scratch/portrait-stacey-adamson.jpg";
+import leoPortrait from "./photos/2026-11-leo-puskar/portrait-leo-puskar.jpg";
 
 /* ------------------------------------------------------------------------------------------ */
 /* Types                                                                                       */
@@ -347,37 +348,44 @@ export const copy = {
 
 export const events: SiteEvent[] = [
   {
-    slug: "2026-10-leo-puskar",
+    slug: "2026-11-leo-puskar",
     // Set to "announced" once the event is confirmed, the room is booked and Eventbrite is live.
+    // Leo's one rule: no income talk at all, anywhere in the copy or the graphics.
     status: "draft",
-    title: "Six Figures in Your Early 20s",
-    subtitle: "A fireside chat with Leo Puskar",
+    title: "Starting Young in Sales",
+    subtitle: "An unscripted fireside chat with RE/MAX agent Leo Puskar",
     format: "Fireside chat",
-    doorsOpen: "2026-10-07T17:30:00-04:00",
-    start: "2026-10-07T18:00:00-04:00",
-    end: "2026-10-07T19:45:00-04:00",
+    doorsOpen: "2026-11-18T17:30:00-05:00",
+    start: "2026-11-18T18:00:00-05:00",
+    end: "2026-11-18T19:45:00-05:00",
     location: { room: "", building: "McMaster University" },
     rsvpUrl: "",
     speakers: [
       {
         name: "Leo Puskar",
-        title: "Real estate agent",
+        title: "Award-Winning RE/MAX Realtor",
         org: "RE/MAX Escarpment Realty",
+        photo: { src: leoPortrait, alt: "Leo Puskar" },
         instagram: "puskarleo",
+        bio: "Award-Winning RE/MAX Realtor | Residential, Investment, New Construction",
       },
     ],
     summary:
-      "Leo Puskar did $100K in commissions in his early 20s, working solo, in his third year in real estate. We're sitting down with him for an honest conversation about how he did it: where his first clients came from, what a normal week actually looked like, what $100K in commissions really leaves you with, and the sales skills that work just as well in an internship interview as in a real estate deal.",
+      "Most people wait until after graduation to start building something. Leo Puskar didn't. He's an award-winning RE/MAX Escarpment agent who built his real estate business on his own in his early 20s, and he's joining us for an unscripted fireside chat. He hasn't seen a single question. We'll talk about how he found his first clients, how to handle rejection, how to read people and start conversations that go somewhere, and the sales skills that work just as well in an interview as in a deal.",
     highlights: [
-      { text: "An honest fireside chat, then your questions" },
-      { text: "Free pizza" },
+      { text: "An unscripted fireside chat, then your questions" },
+      { text: "Free pizza from 5:30 to 6:00, so come early" },
       {
-        text: "A door prize draw at the end. Bring friends: every friend who checks in and names you earns you a bonus entry.",
+        text: "A door prize draw for AirPods at 7:00. Bring friends: every friend who checks in and names you earns you a bonus entry. You must be in the room to win.",
       },
-      { text: "Free professional LinkedIn headshots from Leo's media team", onlyWithHeadshots: true },
+      { text: "A one-page recap of Leo's best advice, emailed to everyone who checks in" },
+      {
+        text: "A free LinkedIn headshot when you share this event to your story, tag @mcmastermrea and follow us (first 35)",
+        onlyWithHeadshots: true,
+      },
     ],
     agenda: [
-      { time: "5:30 PM", text: "Doors and pizza", textWithHeadshots: "Doors, pizza and headshots" },
+      { time: "5:30 PM", text: "Doors, check-in and pizza (pizza until 6:00)" },
       { time: "6:00 PM", text: "Fireside chat with Leo" },
       { time: "6:40 PM", text: "Your questions" },
       { time: "7:00 PM", text: "Door prize draw, then networking until 7:45" },
@@ -386,21 +394,25 @@ export const events: SiteEvent[] = [
     headshotsConfirmed: false,
     promo: {
       carousel: [
-        { kind: "headline", headline: "$100K in commissions. Early 20s. Solo.", smallLine: "MREA fireside, Wednesday, October 7" },
+        {
+          kind: "headline",
+          headline: "What nobody tells you about starting young in sales.",
+          smallLine: "MREA fireside, Wednesday, November 18",
+        },
         {
           kind: "speaker",
           lines: [
-            "Leo Puskar, RE/MAX Escarpment Realty.",
-            "Third year in real estate. No team. $100K in commissions in his early 20s.",
+            "Leo Puskar, award-winning RE/MAX Realtor.",
+            "Built his business on his own in his early 20s. He hasn't seen a single question.",
           ],
         },
         {
           kind: "list",
           heading: "What we're asking him",
           items: [
-            { text: "Where his first clients came from" },
-            { text: "What a normal week really looked like" },
-            { text: "What $100K in commissions actually leaves you" },
+            { text: "How he found his first clients" },
+            { text: "How to handle rejection" },
+            { text: "How to read people and start real conversations" },
             { text: "The sales skills that win interviews, not just deals" },
           ],
         },
@@ -408,16 +420,17 @@ export const events: SiteEvent[] = [
           kind: "list",
           heading: "What you get",
           items: [
-            { text: "Free pizza" },
-            { text: "A door prize" },
+            { text: "Free pizza until 6:00" },
+            { text: "An AirPods door prize" },
             { text: "Your questions, answered live" },
-            { text: "Free LinkedIn headshots", onlyWithHeadshots: true },
+            { text: "A one-page recap of Leo's best advice" },
+            { text: "A free LinkedIn headshot (first 35)", onlyWithHeadshots: true },
           ],
         },
         {
           kind: "details",
-          lines: ["Wednesday, October 7", "5:30 PM, {room}", "Free. Register at the link in bio."],
-          footnote: "Bring friends: every friend who checks in and names you = +1 door prize entry.",
+          lines: ["Wednesday, November 18", "5:30 PM, {room}", "Free. Register at the link in bio."],
+          footnote: "Pizza until 6:00. Bring friends: every friend who checks in and names you = +1 door prize entry.",
         },
       ],
     },
@@ -514,6 +527,20 @@ export const recruiting: Recruiting = {
       description: "Bring first-years to our events, help run event nights, and grow into leadership.",
     },
   ],
+};
+
+/**
+ * Text for the recruiting graphics (npm run graphics -- recruiting). {season} and {closesOn}
+ * fill in from the recruiting block above, so the graphics always match the site.
+ */
+export const recruitingPromo = {
+  /** Carousel slide 1, and the title of the story and LinkedIn image. */
+  headline: "We're building the {season} MREA team.",
+  /** Carousel slide 2 lists every role with its description under this heading. */
+  rolesHeading: "Open roles",
+  /** The last slide and the story. The LinkedIn image shows the team page's address instead. */
+  apply: "Apply by {closesOn}.",
+  linkInBio: "Link in bio.",
 };
 
 /** Organizations that support MREA. Nothing renders while this is empty. */

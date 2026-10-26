@@ -103,9 +103,9 @@ M  HERO
 W  NEXT EVENT (announced upcoming only; otherwise "Next event announced soon.")
    ┌───────────┬─────────────────────────────────────────────────────────┐
    │ (ring     │ Fireside chat                                           │
-   │  photo or │ Six Figures in Your Early 20s            (H2)           │
-   │  monogram)│ A fireside chat with Leo Puskar                         │
-   │           │ Date  Wed, Oct 7, 5:30 PM    Place  Room, McMaster      │
+   │  photo or │ Starting Young in Sales                  (H2)           │
+   │  monogram)│ An unscripted fireside chat with Leo Puskar             │
+   │           │ Date  Wed, Nov 18, 5:30 PM   Place  Room, McMaster      │
    │           │ – highlight  – highlight  – highlight                   │
    │           │ [Details and RSVP]                                      │
    └───────────┴─────────────────────────────────────────────────────────┘
@@ -151,7 +151,7 @@ M  Format (small label)
    [Get your free ticket] (upcoming, before end, rsvpUrl set)  [Share]
 W  ┌──────────────────────────────┬──────────────────────────────────┐
    │ Summary (body)                │ SPEC SHEET                       │
-   │ What you get (H2) list        │ Date    Wednesday, October 7     │
+   │ What you get (H2) list        │ Date    Wednesday, November 18   │
    │ Agenda (H2) time | item list  │ Doors   5:30 PM                  │
    │ Filming notice (small, grey   │ Place   Room, McMaster Univ.     │
    │  rule on left)                │ Format  Fireside chat            │
@@ -170,7 +170,7 @@ The calendar links render as two separate text links, not a dot-joined string.
 M  THE TEAM (H1)  MREA is run by students, for students.
 W  grid: ring monogram/photo, name, role (2 cols mobile, 5 cols desktop)
 M  RECRUITING
-   opening-soon: "We're recruiting for 2026–27." "Applications open Oct 7 and close Oct 25."
+   opening-soon: "We're recruiting for 2026–27." "Applications open Oct 21 and close Nov 4."
                  role list (hairline separated) + "Follow @mcmastermrea so you don't miss it."
    open:         same + [Apply now]
    closed:       "Recruiting is closed for now. Follow @mcmastermrea to hear when it reopens."
@@ -203,9 +203,9 @@ W  Prefer to just follow along? Instagram, LinkedIn
 M  (badge)
    MCMASTER REAL ESTATE ASSOCIATION
    tagline
-   [ Next event: Six Figures in Your Early 20s, Oct 7 ]  (only if announced & upcoming)
+   [ Next event: Starting Young in Sales, Nov 18 ]  (only if announced & upcoming)
    [ Become a member ]
-   [ Team applications open Oct 7 ] / [ Apply to join the team ]
+   [ Team applications open Oct 21 ] / [ Apply to join the team ]
    [ Speak or partner with MREA ]
    [ Follow us on LinkedIn ]
    [ Email us ]

@@ -47,7 +47,7 @@ npm run build
 npx playwright install chromium    # once per computer
 npx next start -p 3100             # in a second terminal, then:
 npm run qa:shots                   # screenshots of every page into qa-shots/
-npm run qa:switches                # rebuilds with each content switch flipped (stop the server first)
+npm run qa:switches                # rebuilds with each content switch flipped (commit and stop the server first)
 ```
 
 ## Other scripts
@@ -56,6 +56,7 @@ npm run qa:switches                # rebuilds with each content switch flipped (
 |---|---|
 | `npm run photos -- <folder> <files...>` | Resizes photos and strips their metadata into `content/photos/<folder>/` |
 | `npm run graphics -- <event-slug>` | Renders Instagram, Eventbrite and LinkedIn graphics for an event into `C:\MREA\brand-kit\events\` |
+| `npm run graphics -- recruiting` | Renders Instagram and LinkedIn graphics for team recruiting into `C:\MREA\brand-kit\recruiting-<year>\` |
 
 ## Contact
 

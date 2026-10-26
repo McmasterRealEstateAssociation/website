@@ -45,6 +45,6 @@ The public site of the **McMaster Real Estate Association (MREA)**, a student-ru
 
 1. `npm run lint` and `npm run build`: zero errors, and every route marked static (○ or ●) in the build output.
 2. Start the site (`npx next start -p 3100`), run `npm run qa:shots`, and **look at** the screenshots at 390, 768 and 1440 px: no overflow, cramped spacing or awkward breaks.
-3. If you touched events, recruiting or dates: stop the server and run `npm run qa:switches`.
-4. Content rules: the built output must not contain "37,000", "Salvati Sells", "salvatisells", "905-" or "only club" wording. "Royal LePage" may appear only as the January 2026 speakers' affiliation.
+3. If you touched events, recruiting or dates: commit first (it restores `content/site.ts` from git), stop the server and run `npm run qa:switches`.
+4. Content rules: the built output must not contain "37,000", "Salvati Sells", "salvatisells", "905-", "only club" wording, "100K", "six figures", "Six Figures", "GCI" (as a word) or "October 7". Leo Puskar's one rule is no income talk at all, in copy or graphics. "Royal LePage" may appear only as the January 2026 speakers' affiliation.
 5. After pushing, confirm the Vercel deployment is Ready and check the live pages.

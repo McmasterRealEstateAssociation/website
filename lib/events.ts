@@ -47,7 +47,7 @@ export const isUpcoming = (event: SiteEvent, now: number = Date.now()) =>
 
 /* Display helpers ------------------------------------------------------------------------ */
 
-/** "Wednesday, October 7, 2026" or the event's date label. */
+/** "Wednesday, November 18, 2026" or the event's date label. */
 export function eventDateLong(event: SiteEvent): string {
   if (event.start) return formatLongDate(event.start);
   if (event.dateLabel) return event.dateLabel;
@@ -55,7 +55,7 @@ export function eventDateLong(event: SiteEvent): string {
   return "";
 }
 
-/** "Oct 7" */
+/** "Nov 18" */
 export function eventDateShort(event: SiteEvent): string {
   if (event.start) return formatShortDate(event.start);
   if (event.date) return formatDayShort(event.date);

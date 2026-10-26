@@ -4,7 +4,7 @@
 // Usage:
 //   npm run photos -- <folder> <photo> [photo ...]
 // Examples:
-//   npm run photos -- 2026-10-leo-puskar "C:\Users\me\Pictures\IMG_1234.jpg"
+//   npm run photos -- 2026-11-leo-puskar "C:\Users\me\Pictures\IMG_1234.jpg"
 //   npm run photos -- team "C:\Users\me\Pictures\justin.jpg"
 //
 // Photos are saved into content/photos/<folder>/ with clean lowercase names. Keep the
