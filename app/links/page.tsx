@@ -3,12 +3,13 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Mark } from "@/components/brand/Mark";
 import { RecruitingGate, TimeGate } from "@/components/client/TimeGate";
-import { copy, recruiting, site } from "@/content/site";
+import { PersonRing } from "@/components/PersonRing";
+import { copy, recruiting, site, type SiteEvent } from "@/content/site";
 import { formatDayMonth } from "@/lib/dates";
-import { eventDateShort, eventPath, upcomingEvents } from "@/lib/events";
+import { eventDateNoYear, eventPath, upcomingEvents } from "@/lib/events";
 import { pageMetadata } from "@/lib/metadata";
 import { effectiveRecruitingStatus } from "@/lib/recruiting";
-import { fill } from "@/lib/text";
+import { fill, noOrphan } from "@/lib/text";
 import { BUILD_TIME } from "@/lib/build-time";
 
 export const metadata: Metadata = pageMetadata({
@@ -48,6 +49,24 @@ function LinkButton({ href, primary, children }: { href: string; primary?: boole
   );
 }
 
+/** The next event as a card: the speaker in a gold ring, then the event's title and date. */
+function NextEventCard({ event }: { event: SiteEvent }) {
+  const speaker = event.speakers[0];
+  return (
+    <Link
+      href={eventPath(event)}
+      className="flex items-center gap-4 rounded-[2px] border-[1.5px] border-gold/60 bg-maroon-deep p-4 transition-colors duration-150 hover:border-gold"
+    >
+      {speaker && <PersonRing name={speaker.name} photo={speaker.photo} size={80} tone="maroon" />}
+      <div className="min-w-0">
+        <p className="text-small font-semibold text-gold">{copy.links.nextEvent}</p>
+        <p className="mt-1 font-display text-[1.3125rem] font-semibold leading-tight">{noOrphan(event.title)}</p>
+        <p className="mt-1.5 text-small text-white/85">{eventDateNoYear(event)}</p>
+      </div>
+    </Link>
+  );
+}
+
 export default function LinksPage() {
   const next = upcomingEvents(BUILD_TIME)[0];
   const opensOn = formatDayMonth(recruiting.opensOn);
@@ -63,9 +82,7 @@ export default function LinksPage() {
           {next && (
             <TimeGate until={next.end ?? next.start ?? ""} visibleAtBuild>
               <li>
-                <LinkButton href={eventPath(next)} primary>
-                  {fill(copy.links.nextEvent, { title: next.title, date: eventDateShort(next) })}
-                </LinkButton>
+                <NextEventCard event={next} />
               </li>
             </TimeGate>
           )}

@@ -310,7 +310,7 @@ export const copy = {
   links: {
     title: "Links",
     description: "Everything MREA in one place: our next event, membership, the team and how to get in touch.",
-    nextEvent: "Next event: {title}, {date}",
+    nextEvent: "Next event",
     member: "Become a member",
     applyTeam: "Apply to join the team",
     teamOpens: "Team applications open {date}",
@@ -349,17 +349,20 @@ export const copy = {
 export const events: SiteEvent[] = [
   {
     slug: "2026-11-leo-puskar",
-    // Set to "announced" once the event is confirmed, the room is booked and Eventbrite is live.
     // Leo's one rule: no income talk at all, anywhere in the copy or the graphics.
-    status: "draft",
+    status: "announced",
     title: "Starting Young in Sales",
     subtitle: "An unscripted fireside chat with RE/MAX agent Leo Puskar",
     format: "Fireside chat",
     doorsOpen: "2026-11-18T17:30:00-05:00",
     start: "2026-11-18T18:00:00-05:00",
     end: "2026-11-18T19:45:00-05:00",
-    location: { room: "", building: "McMaster University" },
-    rsvpUrl: "",
+    location: {
+      room: "MCCD 7120 (Collaboration Studio)",
+      building: "McLean Centre for Collaborative Discovery, McMaster University",
+    },
+    rsvpUrl:
+      "https://www.eventbrite.ca/e/starting-young-in-sales-a-fireside-chat-with-remax-agent-leo-puskar-tickets-2002476414862",
     speakers: [
       {
         name: "Leo Puskar",
@@ -367,7 +370,7 @@ export const events: SiteEvent[] = [
         org: "RE/MAX Escarpment Realty",
         photo: { src: leoPortrait, alt: "Leo Puskar" },
         instagram: "puskarleo",
-        bio: "Award-Winning RE/MAX Realtor | Residential, Investment, New Construction",
+        bio: "Residential, investment and new construction",
       },
     ],
     summary:

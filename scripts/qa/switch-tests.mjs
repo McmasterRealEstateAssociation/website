@@ -57,8 +57,9 @@ async function buildAndServe() {
 const get = async (path) => {
   const res = await fetch(BASE + path);
   const text = await res.text();
-  // `html` is the rendered markup without scripts (React's data payload lists every variant).
-  const html = text.replace(/<script[^>]*>[\s\S]*?<\/script>/g, "");
+  // `html` is the rendered markup without scripts (React's data payload lists every variant),
+  // with non-breaking spaces as plain ones.
+  const html = text.replace(/<script[^>]*>[\s\S]*?<\/script>/g, "").replace(/\u00A0/g, " ");
   return { status: res.status, type: res.headers.get("content-type") ?? "", text, html };
 };
 
@@ -86,11 +87,23 @@ const soonOpens = torontoDay(new Date(Date.now() + 30 * 86400000));
 const soonCloses = torontoDay(new Date(Date.now() + 45 * 86400000));
 const applyUrl = normalized.match(/applyUrl: "([^"]*)"/)[1];
 
-const LEO_ANNOUNCED = [
-  ['    status: "draft",\n    title: "Starting Young', '    status: "announced",\n    title: "Starting Young'],
-  ['location: { room: "", building: "McMaster University" },\n    rsvpUrl: "",\n    speakers: [\n      {\n        name: "Leo Puskar"',
-    'location: { room: "TEST ROOM 101", building: "McMaster University" },\n    rsvpUrl: "https://www.eventbrite.ca/e/test-123",\n    speakers: [\n      {\n        name: "Leo Puskar"'],
+const LEO_SLUG = "2026-11-leo-puskar";
+/** Sets one of Leo's event fields, whatever its current value (a string or a one-level object). */
+const leoField = (field, value) => [
+  new RegExp(`(slug: "${LEO_SLUG}",[\\s\\S]*?\\n    ${field}:)\\s*(?:"[^"]*"|\\{[^}]*\\}),`),
+  `$1 ${value},`,
 ];
+// Leo's real Eventbrite link and place, read from the content file.
+const leoReal = (re) => normalized.slice(normalized.indexOf(`slug: "${LEO_SLUG}"`)).match(re)[1];
+const REAL_RSVP = leoReal(/rsvpUrl:\s*"([^"]*)"/);
+const REAL_PLACE = `${leoReal(/room: "([^"]*)"/)}, ${leoReal(/building: "([^"]*)"/)}`;
+
+const LEO_ANNOUNCED = [
+  leoField("status", '"announced"'),
+  leoField("location", '{ room: "TEST ROOM 101", building: "McMaster University" }'),
+  leoField("rsvpUrl", '"https://www.eventbrite.ca/e/test-123"'),
+];
+const LEO_DRAFT = [leoField("status", '"draft"')];
 const HEADSHOTS = [["    filmed: true,\n    headshotsConfirmed: false,", "    filmed: true,\n    headshotsConfirmed: true,"]];
 const RECRUITING_CLOSED = [['status: "open",\n  season', 'status: "closed",\n  season']];
 const RECRUITING_OPENING_SOON = [
@@ -102,7 +115,7 @@ const LEO_ENDED = [
     'doorsOpen: "2026-09-02T17:30:00-04:00",\n    start: "2026-09-02T18:00:00-04:00",\n    end: "2026-09-02T19:45:00-04:00",'],
 ];
 
-const LEO = "/events/2026-11-leo-puskar";
+const LEO = `/events/${LEO_SLUG}`;
 const LEO_TITLE = "Starting Young in Sales";
 try {
   // 1. Announced event, headshots not confirmed, recruiting closed.
@@ -111,17 +124,18 @@ try {
   let home = await get("/");
   let page = await get(LEO);
   check(page.status === 200, "announced event page exists");
-  check(home.text.includes(LEO_TITLE) && home.text.includes("Get your free ticket"), "home shows the next event and the ticket button");
+  check(home.html.includes(LEO_TITLE) && home.text.includes("Get your free ticket"), "home shows the next event and the ticket button");
   check(page.text.includes('href="https://www.eventbrite.ca/e/test-123"'), "event page has the RSVP link");
   check(page.text.includes('"@type":"Event"') && page.text.includes('"priceCurrency":"CAD"'), "event page has Event JSON-LD with a free CAD offer");
   check(!/headshot/i.test(page.text), "no headshot text while headshots are unconfirmed");
-  check(page.html.includes('alt="Leo Puskar"') && page.html.includes("Residential, Investment, New Construction"), "speaker photo and bio shown");
+  check(page.html.includes('alt="Leo Puskar"') && page.html.includes("Residential, investment and new construction"), "speaker photo and bio shown");
   check(page.text.includes("filmed for MREA&#x27;s and Leo&#x27;s social channels") || page.text.includes("filmed for MREA's and Leo's social channels"), "filming notice names Leo");
   check(page.text.includes("calendar.google.com/calendar/render") && page.text.includes(`${LEO}/calendar.ics`), "calendar links shown");
   const ics = await get(`${LEO}/calendar.ics`);
   check(ics.status === 200 && ics.type.includes("text/calendar") && ics.text.includes("DTSTART:20261118T223000Z") && ics.text.includes("DTEND:20261119T004500Z"), ".ics file: 5:30-7:45 PM Toronto (EST) as UTC");
   check((await get("/sitemap.xml")).text.includes(LEO), "sitemap lists the announced event");
-  check((await get("/links")).text.includes(`Next event: ${LEO_TITLE}, Nov 18`), "links page shows the next event");
+  const links = await get("/links");
+  check(links.html.includes(`href="${LEO}"`) && links.html.includes('alt="Leo Puskar"') && links.html.includes(LEO_TITLE) && links.html.includes("Wednesday, November 18"), "links page: next-event card with Leo's photo, the title and the date");
   check(page.text.includes("TEST ROOM 101, McMaster University"), "spec sheet shows the room");
   let team = await get("/team");
   check(team.text.includes("Recruiting is closed for now"), "recruiting closed: team page says so");
@@ -138,6 +152,8 @@ try {
   await tab.goto(BASE + "/", { waitUntil: "networkidle" });
   check(await tab.getByText("Next event announced soon").isVisible(), "client: home switches to 'announced soon'");
   check((await tab.getByRole("link", { name: "Get your free ticket" }).count()) === 0, "client: home ticket button hidden after the event");
+  await tab.goto(BASE + "/links", { waitUntil: "networkidle" });
+  check((await tab.locator(`a[href="${LEO}"]`).count()) === 0, "client: links page drops the next-event card after the event");
   const before = await ctx.newPage();
   await before.clock.install({ time: new Date("2026-11-10T12:00:00-05:00") });
   await before.goto(BASE + LEO, { waitUntil: "networkidle" });
@@ -161,13 +177,14 @@ try {
   check(page.status === 200 && !page.text.includes('href="https://www.eventbrite.ca/e/test-123"'), "ended event: page has no RSVP");
   check(!home.text.includes("Get your free ticket") && home.text.includes("Next event announced soon"), "ended event: home shows 'announced soon'");
   check((await get(`${LEO}/calendar.ics`)).status === 404, "ended event: no .ics file");
+  check(!(await get("/links")).html.includes(LEO_TITLE), "ended event: no next-event card on the links page");
   team = await get("/team");
   check(team.html.includes(`Applications open ${monthDay(soonOpens)} and close ${monthDay(soonCloses)}.`) && !team.html.includes("Apply now"), "recruiting opening soon: dates, no Apply button");
   check((await get("/links")).text.includes(`Team applications open ${monthDay(soonOpens)}`), "recruiting opening soon: links page line");
   check(home.html.includes("We&#x27;re recruiting") || home.html.includes("We're recruiting"), "recruiting opening soon: home badge");
 
-  // 4. Back to the real content: the draft event is nowhere, and recruiting is open.
-  fs.writeFileSync(SITE, original);
+  // 4. Leo back to draft: the event is nowhere.
+  setContent(LEO_DRAFT);
   await buildAndServe();
   home = await get("/");
   check((await get(LEO)).status === 404, "draft event: page is a 404");
@@ -175,6 +192,15 @@ try {
   check(![home.text, (await get("/links")).text, (await get("/events")).text].some((t) => /Starting Young|Puskar/.test(t)), "draft event: not on home, events or links");
   const leaks = publicBuildFiles().filter((f) => /Starting Young|Puskar/.test(fs.readFileSync(f, "utf8")));
   check(leaks.length === 0, `draft event: not in any built page or client file${leaks.length ? ` (found in ${leaks.join(", ")})` : ""}`);
+
+  // 5. Back to the real content: Leo is announced with the real room and Eventbrite link, and recruiting is open.
+  fs.writeFileSync(SITE, original);
+  await buildAndServe();
+  home = await get("/");
+  page = await get(LEO);
+  check(page.status === 200 && page.text.includes(`href="${REAL_RSVP}"`), "real content: event page has the Eventbrite link");
+  check(page.html.includes(REAL_PLACE), "real content: spec sheet shows the room and building");
+  check(home.html.includes(LEO_TITLE) && (await get("/events")).html.includes(LEO_TITLE) && (await get("/links")).html.includes(`href="${LEO}"`), "real content: home, events and links show the event");
   team = await get("/team");
   check(team.text.includes(`href="${applyUrl}"`) && team.text.includes("Apply now"), "real content: team page has the Apply button");
   check((await get("/links")).text.includes("Apply to join the team"), "real content: links page has 'Apply to join the team'");

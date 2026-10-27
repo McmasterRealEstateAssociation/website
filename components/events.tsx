@@ -10,6 +10,7 @@ import {
   speakerNames,
   timeFact,
 } from "@/lib/events";
+import { noOrphan } from "@/lib/text";
 import { PersonRing } from "./PersonRing";
 import { SpecSheet } from "./SpecSheet";
 import { ButtonLink, TextLink } from "./ui";
@@ -25,7 +26,7 @@ export function NextEventFeature({ event }: { event: SiteEvent }) {
         <p className="text-small font-semibold text-grey">{event.format}</p>
         <h3 className="mt-2 font-display text-h2 font-semibold text-maroon">
           <Link href={eventPath(event)} className="hover:underline hover:decoration-1 hover:underline-offset-4">
-            {event.title}
+            {noOrphan(event.title)}
           </Link>
         </h3>
         {event.subtitle && <p className="mt-2 text-lead">{event.subtitle}</p>}
@@ -100,7 +101,7 @@ export function UpcomingEventRow({ event }: { event: SiteEvent }) {
       {speaker && <PersonRing name={speaker.name} photo={speaker.photo} size={120} />}
       <div>
         <p className="text-small font-semibold text-grey">{event.format}</p>
-        <h3 className="mt-2 font-display text-h2 font-semibold text-maroon">{event.title}</h3>
+        <h3 className="mt-2 font-display text-h2 font-semibold text-maroon">{noOrphan(event.title)}</h3>
         {event.subtitle && <p className="mt-2 text-lead">{event.subtitle}</p>}
         <SpecSheet
           className="mt-6 max-w-xl"

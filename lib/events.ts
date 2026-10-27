@@ -4,6 +4,7 @@ import {
   formatDayLong,
   formatDayShort,
   formatLongDate,
+  formatLongDateNoYear,
   formatShortDate,
   formatTime,
   toCalendarStamp,
@@ -54,6 +55,10 @@ export function eventDateLong(event: SiteEvent): string {
   if (event.date) return formatDayLong(event.date);
   return "";
 }
+
+/** "Wednesday, November 18", or the long date for events without a start time. */
+export const eventDateNoYear = (event: SiteEvent): string =>
+  event.start ? formatLongDateNoYear(event.start) : eventDateLong(event);
 
 /** "Nov 18" */
 export function eventDateShort(event: SiteEvent): string {

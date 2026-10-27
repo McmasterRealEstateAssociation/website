@@ -3,6 +3,9 @@ export function fill(template: string, values: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 }
 
+/** Keeps the last two words on one line, so a title never ends on one short word. */
+export const noOrphan = (text: string) => text.replace(/ (\S+)$/, "\u00A0$1");
+
 /** "Leo" -> "Leo's", "Nic Von Bredow and Stacey Adamson" -> "... Adamson's" */
 export const possessive = (name: string) => (name.endsWith("s") ? `${name}'` : `${name}'s`);
 

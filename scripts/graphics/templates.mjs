@@ -19,6 +19,10 @@ const esc = (s) =>
 /** Display type: the last two words stay together, so a heading never ends on one short word. */
 const title = (s) => esc(s).replace(/ (\S+)$/, "\u00A0$1");
 
+/** "Room, Building, University" breaks between its comma-separated parts while each part fits. */
+const commaBreaks = (s) =>
+  s.split(/(?<=,) /).map((part) => `<span style="display:inline-block">${esc(part)}</span>`).join(" ");
+
 /** Splits "One. Two. Three." into ["One.", "Two.", "Three."] so lists read as lines. */
 export const sentences = (text) => text.split(/(?<=[.!?])\s+/).filter(Boolean);
 
@@ -171,7 +175,7 @@ export function carouselSlide(m, slide, index, total) {
     content = `
       <div class="display" style="font-size:100px;line-height:1.04">${title(first)}</div>
       ${ruleFirst ? rule : ""}
-      ${second ? `<div class="gold" style="margin-top:${ruleFirst ? 40 : 26}px;font-size:50px;font-weight:600">${esc(second)}</div>` : ""}
+      ${second ? `<div class="gold" style="margin-top:${ruleFirst ? 40 : 26}px;font-size:50px;font-weight:600;text-wrap:balance">${esc(second)}</div>` : ""}
       ${ruleFirst ? "" : rule}
       ${rest.map((l) => `<div style="margin-top:40px;font-size:50px;line-height:1.25;font-weight:600">${esc(l)}</div>`).join("")}
       ${
@@ -293,7 +297,7 @@ export function wideBanner(m, size) {
       ${m.subtitle ? `<div style="margin-top:${px(24)}px;font-size:${px(44)}px;line-height:1.3;text-wrap:balance">${esc(m.subtitle)}</div>` : ""}
       <div class="rule" style="margin-top:${px(44)}px;width:${px(96)}px;height:${Math.max(3, px(5))}px"></div>
       <div style="margin-top:${px(36)}px;font-size:${px(42)}px;line-height:1.4;font-weight:600">${esc(m.dateTimeLine)}</div>
-      <div style="margin-top:${px(6)}px;font-size:${px(38)}px;line-height:1.4;color:rgba(255,255,255,.88)">${esc(m.placeLine)}</div>`,
+      <div style="margin-top:${px(6)}px;font-size:${px(38)}px;line-height:1.4;color:rgba(255,255,255,.88)">${commaBreaks(m.placeLine)}</div>`,
     { photo: m.speakerPhoto },
   );
 }

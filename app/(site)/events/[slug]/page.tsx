@@ -73,7 +73,7 @@ function eventJsonLd(event: SiteEvent) {
     image: [`${eventUrl(event)}/opengraph-image`],
     location: {
       "@type": "Place",
-      name: [event.location.room, site.venue.name].filter(Boolean).join(", "),
+      name: [event.location.room, event.location.building ?? site.venue.name].filter(Boolean).join(", "),
       address: {
         "@type": "PostalAddress",
         streetAddress: site.venue.streetAddress,
@@ -216,7 +216,7 @@ export default async function EventPage({ params }: Props) {
             <h2 className="font-display text-h2 text-maroon">
               {event.speakers.length > 1 ? copy.event.speakers : copy.event.speaker}
             </h2>
-            <ul className="mt-8 grid gap-10 sm:grid-cols-2">
+            <ul className={`mt-8 grid gap-10 ${event.speakers.length > 1 ? "sm:grid-cols-2" : ""}`}>
               {event.speakers.map((s) => (
                 <li key={s.name} className="flex items-center gap-5">
                   <PersonRing name={s.name} photo={s.photo} size={112} />
