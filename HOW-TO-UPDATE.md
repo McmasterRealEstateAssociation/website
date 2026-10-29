@@ -173,7 +173,9 @@ The address is set in one place: `site.url` in `content/site.ts`. It feeds every
 npm run graphics -- 2026-11-leo-puskar
 ```
 
-This renders the Instagram carousel (from the event's `promo.carousel`), an Instagram story, an Eventbrite banner and a LinkedIn image into `C:\MREA\brand-kit\events\<event>\`. Draft events go into a `preview\` subfolder so nobody posts them by mistake. When the speaker has a photo, it appears in a gold ring on the carousel, the story and the Eventbrite and LinkedIn images. Headshots are mentioned only once they're confirmed.
+This renders the Instagram carousel (from the event's `promo.carousel`), an Instagram story, an Eventbrite banner and a LinkedIn image into `C:\MREA\brand-kit\events\<event>\`. Draft events go into a `preview\` subfolder so nobody posts them by mistake. When the speaker has a photo, it appears in a gold ring on the carousel's cover, the story and the Eventbrite and LinkedIn images.
+
+The carousel has one idea per slide, in a few words. It starts with a `cover`: a large headline, a line beside the speaker's ring, and a gold bottom line with the date, time and price. After that come `statement` slides (a few words set large, with a small line under them), `list` slides (a small heading, then up to four short items) and a closing `details` slide (the date, then the time and place, then how to register). The story and the LinkedIn image repeat the cover, so they always match it. Every slide keeps its text inside the centre square, so Instagram's profile grid never cuts it off. A list item marked `onlyWithHeadshots` appears only once headshots are confirmed.
 
 **Recruiting graphics:**
 ```

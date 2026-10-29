@@ -25,7 +25,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
-import { carouselSlide, recruitingBanner, recruitingStory, story, wideBanner } from "./templates.mjs";
+import sharp from "sharp";
+import { eventLinkedIn, eventSlide, eventStory, recruitingBanner, recruitingSlide, recruitingStory, wideBanner } from "./templates.mjs";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const args = process.argv.slice(2);
@@ -38,7 +39,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "mrea-graphics-"));
 await build({
   stdin: {
     contents: `export * from "./content/site"; export * from "./lib/events"; export * from "./lib/dates";
-      export { fill, shortName } from "./lib/text"; export { recruitingStatusOn } from "./lib/recruiting-status";
+      export { fill } from "./lib/text"; export { recruitingStatusOn } from "./lib/recruiting-status";
       export { MARK_PATH, BUILDING_PARTS } from "./components/brand/mark-paths";`,
     resolveDir: repo,
     loader: "ts",
@@ -62,10 +63,9 @@ const fonts = {
   montserrat500: dataUri(path.join(fontDir, "Montserrat-500.ttf"), "font/ttf"),
   montserrat600: dataUri(path.join(fontDir, "Montserrat-600.ttf"), "font/ttf"),
 };
-const photoUri = (photo) => {
-  if (!photo) return undefined;
-  const src = typeof photo.src === "string" ? photo.src : photo.src?.src;
-  return src ? dataUri(path.resolve(tmp, src), "image/jpeg") : undefined;
+const photoFile = (photo) => {
+  const src = typeof photo?.src === "string" ? photo.src : photo?.src?.src;
+  return src ? path.resolve(tmp, src) : undefined;
 };
 const brand = {
   clubName: c.site.name,
@@ -76,38 +76,32 @@ const brand = {
 };
 
 // 3. Build the data each template needs.
-function eventModel(event) {
+async function eventModel(event) {
   const roomOrTba = event.location.room || c.copy.event.roomTba;
-  const withHeadshots = (items) =>
-    items.filter((i) => !i.onlyWithHeadshots || event.headshotsConfirmed).map((i) => i.text);
   const doors = c.doorsTime(event);
   const start = c.startTime(event);
   const dateNoYear = event.start ? c.formatLongDateNoYear(event.start) : c.eventDateLong(event);
-  const speaker = event.speakers[0];
+  const dateTimeLine = [dateNoYear, doors ? `doors ${doors}` : start, c.copy.event.price].filter(Boolean).join(", ");
+  const photo = photoFile(event.speakers[0]?.photo);
+  const carousel = (event.promo?.carousel ?? []).map((slide) => {
+    if (slide.kind !== "list") return slide;
+    const items = slide.items.filter((i) => !i.onlyWithHeadshots || event.headshotsConfirmed).map((i) => i.text);
+    if (items.length > 4) console.warn(`  Warning: "${slide.heading}" has ${items.length} items. Four or fewer read at a glance.`);
+    return { ...slide, items };
+  });
   return {
     ...brand,
+    // The Eventbrite banner.
     title: event.title,
     subtitle: event.subtitle,
     format: event.format,
-    formatLine: `${event.format}, ${dateNoYear}`,
-    dateTimeLine: [dateNoYear, doors ? `doors ${doors}` : start, c.copy.event.price].filter(Boolean).join(", "),
+    dateTimeLine,
     placeLine: `${roomOrTba}, ${event.location.building ?? c.site.venue.name}`,
-    price: c.copy.event.price,
-    registerLine: "Register at the link in bio.",
-    speakerName: speaker && c.shortName(speaker.name),
-    speakerTitle: speaker?.title,
-    speakerPhoto: photoUri(speaker?.photo),
-    facts: [
-      { label: "Date", value: dateNoYear },
-      ...(doors ? [{ label: "Doors", value: doors }] : start ? [{ label: "Time", value: start }] : []),
-      { label: "Place", value: `${roomOrTba}, ${event.location.building ?? c.site.venue.name}` },
-      { label: "Price", value: c.copy.event.price },
-    ],
-    carousel: (event.promo?.carousel ?? []).map((slide) => {
-      if (slide.kind === "list") return { ...slide, items: withHeadshots(slide.items) };
-      if (slide.kind === "details") return { ...slide, lines: slide.lines.map((l) => l.replace("{room}", roomOrTba)) };
-      return slide;
-    }),
+    // The carousel, story and LinkedIn image. The story and LinkedIn image repeat the cover.
+    speakerPhoto: photo && dataUri(photo, "image/jpeg"),
+    speakerPhotoWidth: photo && (await sharp(photo).metadata()).width,
+    carousel,
+    cover: carousel.find((s) => s.kind === "cover") ?? { headline: event.title, subline: event.subtitle, bottomLine: dateTimeLine },
   };
 }
 
@@ -133,9 +127,9 @@ function recruitingModel() {
   };
 }
 
-const carouselJobs = (m) =>
+const carouselJobs = (m, render) =>
   m.carousel.map((slide, i) => ({
-    file: `instagram-carousel-${i + 1}.png`, width: 1080, height: 1350, html: carouselSlide(m, slide, i, m.carousel.length),
+    file: `instagram-carousel-${i + 1}.png`, width: 1080, height: 1350, html: render(m, slide, i, m.carousel.length),
   }));
 
 // 4. Decide what to render.
@@ -153,7 +147,7 @@ if (wantsRecruiting) {
   sets.push({
     dir: path.join(kitRoot, `recruiting-${c.recruiting.season.slice(0, 4)}`, status === "open" ? "" : "preview"),
     jobs: [
-      ...carouselJobs(m),
+      ...carouselJobs(m, recruitingSlide),
       { file: "instagram-story.png", width: 1080, height: 1920, html: recruitingStory(m) },
       { file: "linkedin-post-1200x627.png", width: 1200, height: 627, html: recruitingBanner(m, { width: 1200, height: 627 }) },
     ],
@@ -167,14 +161,14 @@ if (!wantsRecruiting || eventSlugs.length > 0) {
     process.exit(1);
   }
   for (const event of events) {
-    const m = eventModel(event);
+    const m = await eventModel(event);
     sets.push({
       dir: path.join(kitRoot, "events", event.slug, event.status === "draft" ? "preview" : ""),
       jobs: [
-        ...carouselJobs(m),
-        { file: "instagram-story.png", width: 1080, height: 1920, html: story(m) },
+        ...carouselJobs(m, eventSlide),
+        { file: "instagram-story.png", width: 1080, height: 1920, html: eventStory(m) },
         { file: "eventbrite-banner-2160x1080.png", width: 2160, height: 1080, html: wideBanner(m, { width: 2160, height: 1080 }) },
-        { file: "linkedin-post-1200x627.png", width: 1200, height: 627, html: wideBanner(m, { width: 1200, height: 627 }) },
+        { file: "linkedin-post-1200x627.png", width: 1200, height: 627, html: eventLinkedIn(m) },
       ],
     });
   }
@@ -190,10 +184,12 @@ try {
       await page.setContent(job.html, { waitUntil: "load" });
       await page.evaluate(() => document.fonts.ready);
       const overflowing = await page.evaluate(() => window.fitContent());
+      const enlarged = await page.evaluate(() => document.querySelector("[data-enlarged]") !== null);
       await page.screenshot({ path: path.join(dir, job.file), clip: { x: 0, y: 0, width: job.width, height: job.height } });
       await page.close();
       console.log(path.join(dir, job.file));
       if (overflowing.length) console.warn(`  Warning: text is too long to fit (${overflowing.join(", ")}). Shorten it in content/site.ts.`);
+      if (enlarged) console.warn("  Warning: the speaker's photo is smaller than its ring and may look soft. Use a larger photo.");
     }
   }
 } finally {

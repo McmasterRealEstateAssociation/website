@@ -64,11 +64,21 @@ export type AgendaItem = {
   textWithHeadshots?: string;
 };
 
+/**
+ * Instagram carousel slides (npm run graphics). One idea per slide, in a few words. Each
+ * sentence starts a new line.
+ * - cover: the first slide. The headline set large, the subline beside the speaker's photo in
+ *   its gold ring, and the bottom line in gold. The story and the LinkedIn image repeat it.
+ * - statement: a short statement set large, with a small line under it.
+ * - list: a small heading, then up to four short items set large, one per line.
+ * - details: the last slide. The date set large, then the lines under it: the first (time and
+ *   place) in gold, then how to register.
+ */
 export type CarouselSlide =
-  | { kind: "headline"; headline: string; smallLine: string }
-  | { kind: "speaker"; lines: string[] }
+  | { kind: "cover"; headline: string; subline?: string; bottomLine?: string }
+  | { kind: "statement"; large: string; small?: string }
   | { kind: "list"; heading: string; items: HighlightItem[] }
-  | { kind: "details"; lines: string[]; footnote?: string };
+  | { kind: "details"; large: string; lines: string[] };
 
 export type SiteEvent = {
   slug: string;
@@ -398,42 +408,30 @@ export const events: SiteEvent[] = [
     promo: {
       carousel: [
         {
-          kind: "headline",
+          kind: "cover",
           headline: "What nobody tells you about starting young in sales.",
-          smallLine: "MREA fireside, Wednesday, November 18",
+          subline: "An unscripted fireside chat with Leo Puskar.",
+          bottomLine: "Wednesday, Nov 18. 5:30 PM. Free.",
         },
         {
-          kind: "speaker",
-          lines: [
-            "Leo Puskar, award-winning RE/MAX Realtor.",
-            "Built his business on his own in his early 20s. He hasn't seen a single question.",
-          ],
-        },
-        {
-          kind: "list",
-          heading: "What we're asking him",
-          items: [
-            { text: "How he found his first clients" },
-            { text: "How to handle rejection" },
-            { text: "How to read people and start real conversations" },
-            { text: "The sales skills that win interviews, not just deals" },
-          ],
+          kind: "statement",
+          large: "He hasn't seen a single question.",
+          small: "Leo Puskar. Award-winning RE/MAX Realtor. Built his business on his own in his early 20s.",
         },
         {
           kind: "list",
-          heading: "What you get",
-          items: [
-            { text: "Free pizza until 6:00" },
-            { text: "An AirPods door prize" },
-            { text: "Your questions, answered live" },
-            { text: "A one-page recap of Leo's best advice" },
-            { text: "A free LinkedIn headshot (first 35)", onlyWithHeadshots: true },
-          ],
+          heading: "What we're asking.",
+          items: [{ text: "First clients." }, { text: "Rejection." }, { text: "Reading people." }, { text: "Interviews." }],
+        },
+        {
+          kind: "statement",
+          large: "Free pizza. AirPods.",
+          small: "Pizza until 6:00. AirPods draw at 7:00. Bring a friend for an extra entry.",
         },
         {
           kind: "details",
-          lines: ["Wednesday, November 18", "5:30 PM, {room}", "Free. Register at the link in bio."],
-          footnote: "Pizza until 6:00. Bring friends: every friend who checks in and names you = +1 door prize entry.",
+          large: "Wednesday, November 18.",
+          lines: ["5:30 PM. MCCD 7120, McLean Centre.", "Free for every McMaster student. Register at the link in bio."],
         },
       ],
     },
