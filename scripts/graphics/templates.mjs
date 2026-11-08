@@ -131,18 +131,6 @@ const ring = (photo, size, { border = 4, gap = 10 } = {}) =>
 const signature = (m, size = 64, font = 24) =>
   `<div class="sig">${mark(m.markPath, size)}<span style="font-size:${font}px">${esc(m.clubName)}</span></div>`;
 
-/** A list with a short gold dash before each item and gold hairlines between items. */
-const dashList = (items, { font, pad, dash = 28, gap = 32 }) => `
-  <div style="border-top:2px solid rgba(253,191,87,.55)">
-    ${items
-      .map(
-        (it) => `<div style="display:flex;gap:${gap}px;align-items:baseline;padding:${pad}px 0;border-bottom:2px solid rgba(253,191,87,.55)">
-           <span style="width:${dash}px;height:3px;background:${GOLD};flex-shrink:0;transform:translateY(-${Math.round(font * 0.3)}px)"></span>
-           <span style="font-size:${font}px;line-height:1.25;font-weight:500;text-wrap:balance">${esc(it)}</span></div>`,
-      )
-      .join("")}
-  </div>`;
-
 /* ---------------------------------------------------------------------------------------- */
 /* Event graphics: carousel, story and LinkedIn image                                        */
 /* ---------------------------------------------------------------------------------------- */
@@ -155,6 +143,14 @@ const EVENT_CSS = ".trim { text-box: trim-both cap alphabetic; }";
 
 /** Big type: short words and joining words stay with the next word, so no line ends on "a", "in" or "with". */
 const big = (s) => esc(s).replace(/(?<=^|\s)(\S{1,3}|with|from|into|than|that|this|your) (?=\S)/gi, "$1\u00A0");
+
+/** Poster sublines keep their phrases whole: a new line can start after a comma or before "with". */
+const phrases = (s) =>
+  s.split(/(?<=,) | (?=with )/).map((part) => `<span style="display:inline-block">${esc(part)}</span>`).join(" ");
+
+/** A trailing "(2-3)" is set small and stays with the word before it. */
+const withNote = (html) =>
+  html.replace(/(\S+) (\([^)]*\))$/, '<span style="white-space:nowrap">$1 <span style="font-family:Montserrat;font-weight:500;font-size:.5em">$2</span></span>');
 
 /** Each sentence starts a new line. */
 const bySentence = (text, render = esc) => sentences(text).map((s) => `<div>${render(s)}</div>`).join("");
@@ -186,7 +182,7 @@ function portrait(m, size, { border = 4, gap = 10 } = {}) {
   const inner = size - 2 * (border + gap);
   const drawn = Math.max(inner, Math.min(Math.round(inner * 1.12), m.speakerPhotoWidth));
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;border:${border}px solid ${GOLD};padding:${gap}px;flex-shrink:0">
-     <div${drawn > m.speakerPhotoWidth ? " data-enlarged" : ""} style="width:100%;height:100%;border-radius:50%;background:url(${m.speakerPhoto}) 50% 24%/${drawn}px auto no-repeat"></div></div>`;
+     <div data-drawn="${drawn}"${drawn > m.speakerPhotoWidth ? " data-enlarged" : ""} style="width:100%;height:100%;border-radius:50%;background:url(${m.speakerPhoto}) 50% 24%/${drawn}px auto no-repeat"></div></div>`;
 }
 
 // Carousel, 1080 x 1350. All text sits inside the centre 1080 x 1080 square (y 135 to 1215),
@@ -204,15 +200,15 @@ const slideContent = {
     </div>
     ${s.bottomLine ? goldLine(s.bottomLine, 42) : ""}`,
   statement: (m, s) => `
-    <div class="display trim" style="font-size:120px;line-height:1.02">${bySentence(s.large, big)}</div>
+    <div class="display trim" style="font-size:${s.size ?? 120}px;line-height:1.02">${bySentence(s.large, big)}</div>
     ${s.small ? `<div><div class="rule"></div>${small(s.small, 42, "margin-top:56px")}</div>` : ""}`,
   list: (m, s) => `
     ${goldLine(s.heading, 42)}
-    ${s.items.map((i) => `<div class="display trim" style="font-size:100px;line-height:1.04">${big(i)}</div>`).join("")}`,
+    ${s.items.map((i) => `<div class="display trim" style="font-size:${s.size ?? 100}px;line-height:1.04">${withNote(big(i))}</div>`).join("")}`,
   details: (m, s) => {
     const [first, ...rest] = s.lines;
     return `
-      <div class="display trim" style="font-size:120px;line-height:1.02">${bySentence(s.large, big)}</div>
+      <div class="display trim" style="font-size:${s.size ?? 120}px;line-height:1.02">${bySentence(s.large, big)}</div>
       <div><div class="rule"></div>
         ${first ? goldLine(first, 42, "margin-top:56px") : ""}
         ${rest.length ? small(rest.join(" "), 42, "margin-top:29px") : ""}</div>`;
@@ -264,85 +260,113 @@ export function eventLinkedIn(m) {
 }
 
 /* ---------------------------------------------------------------------------------------- */
-/* Recruiting carousel, 1080 x 1350                                                          */
+/* Printable poster (11 x 17 and 8.5 x 11) and classroom slide (1920 x 1080)                  */
 /* ---------------------------------------------------------------------------------------- */
 
-export function recruitingSlide(m, slide, index, total) {
-  const W = 1080, H = 1350, PAD = 96;
-  // Layout: signature at the top, content centred in the middle band, handle and page count at
-  // the bottom. Slides with the elevation drawing reserve a band above the footer for it.
-  const hasDrawing = slide.kind === "headline" || slide.kind === "details";
-  const drawingWidth = slide.kind === "headline" ? 540 : 440;
-  const drawingHeight = Math.round(drawingWidth * 0.596);
-  const footerTop = H - 128;
-  const mainTop = 210;
-  const mainBottom = hasDrawing ? footerTop - drawingHeight - 70 : footerTop - 40;
-  let content = "";
+// The carousel cover, plus the details and a QR code. Canvas sizes are CSS pixels at 96 per
+// inch, so the PDF comes out at exact paper size. Margins stay at least half an inch, which
+// clears an office printer's unprintable edge.
+export const POSTER_FORMATS = {
+  "11x17": { W: 1056, H: 1632, PAD: 72, TOP: 56, sigSize: 72, sigFont: 27, boxTop: 196, gap: 40, head: 102, ring: 280, ringGap: 48, sub: 35, when: 34, perks: 29, cells: 9, label: 30, labelGap: 26 },
+  "8.5x11": { W: 816, H: 1056, PAD: 54, TOP: 40, sigSize: 52, sigFont: 20, boxTop: 130, gap: 28, head: 78, ring: 190, ringGap: 34, sub: 29, when: 29, perks: 24, cells: 6, label: 24, labelGap: 18 },
+};
 
-  if (slide.kind === "headline") {
-    // Long headlines go a size down so their key phrases stay on one line.
-    content = `
-      <div class="display" style="font-size:${slide.headline.length > 40 ? 96 : 108}px;line-height:1.02">${sentences(slide.headline).map((l) => `<div>${title(l)}</div>`).join("")}</div>
-      <div class="rule" style="margin-top:44px"></div>`;
-  } else if (slide.kind === "roles") {
-    // Each role: its title, then its one-line description.
-    content = `
-      <div class="display" style="font-size:88px;line-height:1.05">${title(slide.heading)}</div>
-      <div style="margin-top:48px;border-top:2px solid rgba(253,191,87,.55)">
-        ${slide.roles
-          .map(
-            (r) => `<div style="padding:28px 0 30px;border-bottom:2px solid rgba(253,191,87,.55)">
-               <div class="gold" style="font-size:44px;line-height:1.2;font-weight:600">${esc(r.title)}</div>
-               <div style="margin-top:12px;font-size:35px;line-height:1.4;color:rgba(255,255,255,.92);text-wrap:balance">${esc(r.description)}</div></div>`,
-          )
-          .join("")}
-      </div>`;
-  } else if (slide.kind === "details") {
-    // "Apply by ..." set large, the gold rule, then "Link in bio." in gold.
-    const [first, second] = slide.lines;
-    content = `
-      <div class="display" style="font-size:100px;line-height:1.04">${title(first)}</div>
-      <div class="rule" style="margin-top:50px"></div>
-      ${second ? `<div class="gold" style="margin-top:40px;font-size:50px;font-weight:600;text-wrap:balance">${esc(second)}</div>` : ""}`;
-  }
+/** The QR code at a whole number of device pixels per module, with its white quiet zone built in. */
+function qrBlock(m, cells, labelSize, labelGap) {
+  const size = m.poster.qrModules * cells;
+  return `<div style="flex-shrink:0;width:${size}px">
+    ${m.poster.qrSvg.replace("<svg ", `<svg width="${size}" height="${size}" style="display:block" `)}
+    <div class="gold trim" style="margin-top:${labelGap}px;text-align:center;font-size:${labelSize}px;font-weight:600">${esc(m.poster.scanLabel)}</div>
+  </div>`;
+}
 
+/** One sentence per line; a long sentence wraps. */
+const lines = (text, size, style = "") =>
+  `<div class="trim" style="font-size:${size}px;line-height:1.38;${style}">${sentences(text).map((s) => `<div>${esc(s)}</div>`).join("")}</div>`;
+
+export function eventPoster(m, format) {
+  const F = POSTER_FORMATS[format];
+  const p = m.poster;
+  const content = `
+    ${headline(p.headline, F.head)}
+    <div style="display:flex;align-items:center;gap:${F.ringGap}px">
+      ${m.speakerPhoto ? portrait(m, F.ring, { border: format === "11x17" ? 5 : 4 }) : ""}
+      <div class="trim" style="flex:1;font-size:${F.sub}px;line-height:1.3">${phrases(p.subline)}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:stretch;gap:${F.ringGap}px">
+      <div style="display:flex;flex-direction:column;justify-content:space-between">
+        ${lines(p.when, F.when, `color:${GOLD};font-weight:600`)}
+        <div><div class="rule" style="margin-bottom:${F.labelGap + 8}px"></div>${lines(p.perks, F.perks)}</div>
+      </div>
+      ${qrBlock(m, F.cells, F.label, F.labelGap)}
+    </div>`;
   const body = `
-    <div style="position:absolute;left:${PAD}px;top:${PAD}px">${signature(m)}</div>
-    ${fitBox("main", { left: PAD, right: PAD, top: mainTop, height: mainBottom - mainTop }, content)}
-    ${hasDrawing ? `<div style="position:absolute;right:${PAD - 24}px;top:${footerTop - drawingHeight - 34}px">${elevation(m.parts, drawingWidth)}</div>` : ""}
-    <div style="position:absolute;left:${PAD}px;right:${PAD}px;top:${footerTop}px;display:flex;justify-content:space-between;font-size:26px;font-weight:600;color:rgba(255,255,255,.8)">
-      <span>@${esc(m.handle)}</span><span>${index + 1} / ${total}</span></div>`;
-  return page({ width: W, height: H, fonts: m.fonts, body });
+    <div style="position:absolute;left:${F.PAD}px;top:${F.TOP}px">${signature(m, F.sigSize, F.sigFont)}</div>
+    ${spreadBox("poster", { left: F.PAD, right: F.PAD, top: F.boxTop, height: F.H - F.boxTop - F.PAD }, F.gap, content)}`;
+  return page({
+    width: F.W,
+    height: F.H,
+    fonts: m.fonts,
+    body,
+    extraCss: `${EVENT_CSS} @page { size: ${F.W / 96}in ${F.H / 96}in; margin: 0; } html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`,
+  });
+}
+
+// Classroom slide, 1920 x 1080: the poster on its side, with the QR code large enough to scan
+// from a seat.
+export function eventPosterSlide(m) {
+  const W = 1920, H = 1080, PAD = 96, CELLS = 13;
+  const p = m.poster;
+  const qrSize = p.qrModules * CELLS;
+  const left = W - 2 * PAD - qrSize - 88;
+  const content = `
+    <div class="display trim" style="font-size:98px;line-height:1.06;max-width:11.4em">${big(p.headline)}</div>
+    <div style="display:flex;align-items:center;gap:44px">
+      ${m.speakerPhoto ? portrait(m, 230) : ""}
+      <div class="trim" style="flex:1;font-size:40px;line-height:1.3">${phrases(p.subline)}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:48px">
+      ${lines(p.when, 34, `color:${GOLD};font-weight:600`)}
+      ${lines(p.perks, 34)}
+    </div>`;
+  const body = `
+    <div style="position:absolute;left:${PAD}px;top:64px">${signature(m, 68, 25)}</div>
+    ${spreadBox("slide", { left: PAD, width: left, top: 190, height: H - 190 - 88 }, 40, content)}
+    <div style="position:absolute;right:${PAD}px;top:${Math.round((H - qrSize - 72) / 2)}px">${qrBlock(m, CELLS, 42, 32)}</div>`;
+  return page({ width: W, height: H, fonts: m.fonts, body, extraCss: EVENT_CSS });
 }
 
 /* ---------------------------------------------------------------------------------------- */
-/* Recruiting story, 1080 x 1920 (text stays out of the top 250 px and bottom 340 px)       */
+/* Recruiting story and LinkedIn image. The carousel uses eventSlide.                         */
 /* ---------------------------------------------------------------------------------------- */
 
-const STORY = { W: 1080, H: 1920, PAD: 96, TOP: 380, GROUND: 1920 - 340, DRAWING: 480 };
-
-/** The signature at the top and the drawing on its ground line. */
-function storyPage(m, content) {
-  const { W, H, PAD, TOP, GROUND, DRAWING } = STORY;
-  const drawingHeight = Math.round(DRAWING * 0.596);
-  const contentBottom = GROUND - drawingHeight + 10;
-  const body = `
-    <div style="position:absolute;left:${PAD}px;top:262px">${signature(m, 68, 25)}</div>
-    ${fitBox("story", { left: PAD, right: PAD, top: TOP, height: contentBottom - TOP }, content)}
-    <div style="position:absolute;right:${PAD - 24}px;top:${GROUND - drawingHeight + 30}px">${elevation(m.parts, DRAWING)}</div>`;
-  return page({ width: W, height: H, fonts: m.fonts, body });
-}
-
+// Story, 1080 x 1920: the same frame as the event story, with the roles and the deadline.
 export function recruitingStory(m) {
-  return storyPage(
-    m,
-    `<div class="display" style="font-size:100px;line-height:1.04">${title(m.headline)}</div>
-     <div class="rule" style="margin-top:46px"></div>
-     <div class="gold" style="margin-top:44px;font-size:34px;font-weight:600">${esc(m.rolesHeading)}</div>
-     <div style="margin-top:22px">${dashList(m.roles.map((r) => r.title), { font: 42, pad: 22, dash: 24, gap: 26 })}</div>
-     <div style="margin-top:46px;font-size:46px;line-height:1.3;font-weight:600">${esc(m.apply)}</div>
-     <div class="gold" style="margin-top:10px;font-size:40px;font-weight:600">${esc(m.linkInBio)}</div>`,
-  );
+  const W = 1080, H = 1920, PAD = 96;
+  const content = `
+    ${headline(m.headline, 100)}
+    <div class="trim" style="font-size:42px;line-height:1.5">${m.roles.map((r) => `<div>${esc(r.title)}</div>`).join("")}</div>
+    <div><div class="rule"></div>
+      ${goldLine(m.apply, 48, "margin-top:56px")}
+      ${small(m.linkInBio, 42, "margin-top:29px")}</div>`;
+  const body = `
+    <div style="position:absolute;left:${PAD}px;top:290px">${signature(m, 68, 25)}</div>
+    ${spreadBox("story", { left: PAD, right: PAD, top: 500, height: 1390 - 500 }, 64, content)}`;
+  return page({ width: W, height: H, fonts: m.fonts, body, extraCss: EVENT_CSS });
+}
+
+// LinkedIn, 1200 x 627: the headline and deadline on the left, the elevation on the right.
+export function recruitingLinkedIn(m) {
+  const W = 1200, H = 627, PAD = 72, DRAWING = 400;
+  const GROUND = Math.round(DRAWING * 0.541); // Where the ground line sits in the drawing.
+  const text = `
+    ${headline(m.headline, 62)}
+    <div>${goldLine(m.apply, 30)}${small(m.teamPage, 30, "margin-top:16px")}</div>`;
+  const body = `
+    <div style="position:absolute;left:${PAD}px;top:46px">${signature(m, 52, 19)}</div>
+    ${spreadBox("text", { left: PAD, width: 620, top: 150, height: H - PAD - 150 }, 32, text)}
+    <div style="position:absolute;right:${PAD}px;top:${H - PAD - GROUND}px;width:${DRAWING}px;overflow:hidden">${elevation(m.parts, DRAWING, { stroke: 1.8 })}</div>`;
+  return page({ width: W, height: H, fonts: m.fonts, body, extraCss: EVENT_CSS });
 }
 
 /* ---------------------------------------------------------------------------------------- */
@@ -384,19 +408,6 @@ export function wideBanner(m, size) {
       <div style="margin-top:${px(36)}px;font-size:${px(42)}px;line-height:1.4;font-weight:600">${esc(m.dateTimeLine)}</div>
       <div style="margin-top:${px(6)}px;font-size:${px(38)}px;line-height:1.4;color:rgba(255,255,255,.88)">${commaBreaks(m.placeLine)}</div>`,
     { photo: m.speakerPhoto },
-  );
-}
-
-export function recruitingBanner(m, size) {
-  return widePage(
-    m,
-    size,
-    (px) => `
-      <div class="display" style="font-size:${px(104)}px;line-height:1.04">${title(m.headline)}</div>
-      <div class="rule" style="margin-top:${px(40)}px;width:${px(96)}px;height:${Math.max(3, px(5))}px"></div>
-      <div style="margin-top:${px(34)}px;font-size:${px(40)}px;line-height:1.45;font-weight:600">${m.roles.map((r) => `<div>${esc(r.title)}</div>`).join("")}</div>
-      <div style="margin-top:${px(30)}px;font-size:${px(40)}px;line-height:1.4;color:rgba(255,255,255,.9)">${esc(m.apply)}</div>
-      <div class="gold" style="font-size:${px(40)}px;line-height:1.4;font-weight:600">${esc(m.teamPage)}</div>`,
   );
 }
 

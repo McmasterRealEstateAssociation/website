@@ -177,12 +177,14 @@ This renders the Instagram carousel (from the event's `promo.carousel`), an Inst
 
 The carousel has one idea per slide, in a few words. It starts with a `cover`: a large headline, a line beside the speaker's ring, and a gold bottom line with the date, time and price. After that come `statement` slides (a few words set large, with a small line under them), `list` slides (a small heading, then up to four short items) and a closing `details` slide (the date, then the time and place, then how to register). The story and the LinkedIn image repeat the cover, so they always match it. Every slide keeps its text inside the centre square, so Instagram's profile grid never cuts it off. A list item marked `onlyWithHeadshots` appears only once headshots are confirmed.
 
+If the event has a `promo.poster`, the same command also makes a printable poster (`poster-11x17.pdf` and `poster-8.5x11.pdf`) and a slide for professors to show before class (`poster-slide-1920x1080.png`). Each has a QR code to the event's page.
+
 **Recruiting graphics:**
 ```
 npm run graphics -- recruiting
 ```
 
-This renders a three-slide Instagram carousel (the headline, the open roles, how to apply), an Instagram story and a LinkedIn image into `C:\MREA\brand-kit\recruiting-<year>\`. The season, deadline and roles come from the `recruiting` block and the wording from `recruitingPromo` just below it, so the graphics always match the site. If recruiting hasn't opened yet they go into a `preview\` subfolder; if it's closed, nothing is made.
+This renders a three-slide Instagram carousel (the headline, the open role names, the deadline), an Instagram story and a LinkedIn image into `C:\MREA\brand-kit\recruiting-<year>\`. The season, deadline and roles come from the `recruiting` block and the wording from `recruitingPromo` just below it, so the graphics always match the site. If recruiting hasn't opened yet they go into a `preview\` subfolder; if it's closed, nothing is made.
 
 If some text is too long for its space, the generator shrinks it to fit, and warns you when it can't. Shorten that text in `content/site.ts`.
 

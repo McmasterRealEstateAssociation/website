@@ -5,6 +5,8 @@
 //   - an Instagram story (1080 x 1920)
 //   - an Eventbrite banner (2160 x 1080)
 //   - a LinkedIn post image (1200 x 627)
+//   - from the event's promo.poster: printable 11 x 17 and 8.5 x 11 PDFs and a 1920 x 1080 slide,
+//     each with a QR code to the event page
 // For team recruiting (from the recruiting block and recruitingPromo):
 //   - Instagram carousel slides (1080 x 1350): the headline, the open roles, how to apply
 //   - an Instagram story (1080 x 1920)
@@ -25,8 +27,9 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
+import QRCode from "qrcode";
 import sharp from "sharp";
-import { eventLinkedIn, eventSlide, eventStory, recruitingBanner, recruitingSlide, recruitingStory, wideBanner } from "./templates.mjs";
+import { eventLinkedIn, eventPoster, eventPosterSlide, eventSlide, eventStory, POSTER_FORMATS, recruitingLinkedIn, recruitingStory, wideBanner } from "./templates.mjs";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const args = process.argv.slice(2);
@@ -89,8 +92,20 @@ async function eventModel(event) {
     if (items.length > 4) console.warn(`  Warning: "${slide.heading}" has ${items.length} items. Four or fewer read at a glance.`);
     return { ...slide, items };
   });
+  let poster;
+  if (event.promo?.poster) {
+    const eventUrl = `${c.site.url}/events/${event.slug}`;
+    const qrOptions = { errorCorrectionLevel: "M" };
+    poster = {
+      ...event.promo.poster,
+      eventUrl,
+      qrModules: QRCode.create(eventUrl, qrOptions).modules.size + 8,
+      qrSvg: await QRCode.toString(eventUrl, { ...qrOptions, type: "svg", margin: 4, color: { dark: "#000000", light: "#ffffff" } }),
+    };
+  }
   return {
     ...brand,
+    poster,
     // The Eventbrite banner.
     title: event.title,
     subtitle: event.subtitle,
@@ -116,13 +131,12 @@ function recruitingModel() {
     headline,
     apply,
     linkInBio: p.linkInBio,
-    rolesHeading: p.rolesHeading,
     roles: r.roles,
     teamPage: `${c.site.url.replace(/^https?:\/\//, "")}/team`,
     carousel: [
-      { kind: "headline", headline },
-      { kind: "roles", heading: p.rolesHeading, roles: r.roles },
-      { kind: "details", lines: [apply, p.linkInBio] },
+      { kind: "statement", large: headline, small: p.opener, size: 96 },
+      { kind: "list", heading: p.rolesHeading, items: r.roles.map((role) => role.title), size: 84 },
+      { kind: "details", large: apply, lines: [p.linkInBio], size: 96 },
     ],
   };
 }
@@ -147,9 +161,9 @@ if (wantsRecruiting) {
   sets.push({
     dir: path.join(kitRoot, `recruiting-${c.recruiting.season.slice(0, 4)}`, status === "open" ? "" : "preview"),
     jobs: [
-      ...carouselJobs(m, recruitingSlide),
+      ...carouselJobs(m, eventSlide),
       { file: "instagram-story.png", width: 1080, height: 1920, html: recruitingStory(m) },
-      { file: "linkedin-post-1200x627.png", width: 1200, height: 627, html: recruitingBanner(m, { width: 1200, height: 627 }) },
+      { file: "linkedin-post-1200x627.png", width: 1200, height: 627, html: recruitingLinkedIn(m) },
     ],
   });
 }
@@ -169,6 +183,14 @@ if (!wantsRecruiting || eventSlugs.length > 0) {
         { file: "instagram-story.png", width: 1080, height: 1920, html: eventStory(m) },
         { file: "eventbrite-banner-2160x1080.png", width: 2160, height: 1080, html: wideBanner(m, { width: 2160, height: 1080 }) },
         { file: "linkedin-post-1200x627.png", width: 1200, height: 627, html: eventLinkedIn(m) },
+        ...(m.poster
+          ? [
+              ...Object.keys(POSTER_FORMATS).map((format) => ({
+                file: `poster-${format}.pdf`, width: POSTER_FORMATS[format].W, height: POSTER_FORMATS[format].H, pdf: true, photoWidth: m.speakerPhotoWidth, html: eventPoster(m, format),
+              })),
+              { file: "poster-slide-1920x1080.png", width: 1920, height: 1080, html: eventPosterSlide(m) },
+            ]
+          : []),
       ],
     });
   }
@@ -185,7 +207,14 @@ try {
       await page.evaluate(() => document.fonts.ready);
       const overflowing = await page.evaluate(() => window.fitContent());
       const enlarged = await page.evaluate(() => document.querySelector("[data-enlarged]") !== null);
-      await page.screenshot({ path: path.join(dir, job.file), clip: { x: 0, y: 0, width: job.width, height: job.height } });
+      if (job.pdf) {
+        await page.pdf({ path: path.join(dir, job.file), printBackground: true, preferCSSPageSize: true });
+        const drawn = await page.evaluate(() => Number(document.querySelector("[data-drawn]")?.dataset.drawn ?? 0));
+        const ppi = drawn && Math.round(job.photoWidth / (drawn / 96));
+        if (ppi && ppi < 150) console.warn(`  Note: the speaker's photo prints at ${ppi} pixels per inch here. A larger photo would print sharper.`);
+      } else {
+        await page.screenshot({ path: path.join(dir, job.file), clip: { x: 0, y: 0, width: job.width, height: job.height } });
+      }
       await page.close();
       console.log(path.join(dir, job.file));
       if (overflowing.length) console.warn(`  Warning: text is too long to fit (${overflowing.join(", ")}). Shorten it in content/site.ts.`);

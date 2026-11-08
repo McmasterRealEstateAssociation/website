@@ -113,6 +113,11 @@ export type SiteEvent = {
   };
   promo?: {
     carousel: CarouselSlide[];
+    /**
+     * Printable poster and classroom slide (npm run graphics). The QR code always points to
+     * the event's page. In `when` and `perks`, each sentence starts a new line.
+     */
+    poster?: { headline: string; subline: string; when: string; perks: string; scanLabel: string };
   };
 };
 
@@ -268,6 +273,7 @@ export const copy = {
     recruitingHeading: "Join the team",
     openingSoonLead: "We're recruiting for {season}.",
     windowLine: "Applications open {opensOn} and close {closesOn}.",
+    closesLine: "Applications close {closesOn}.",
     followLine: "Follow @mcmastermrea so you don't miss it.",
     applyButton: "Apply now",
     closed: "Recruiting is closed for now. Follow @mcmastermrea to hear when it reopens.",
@@ -434,6 +440,13 @@ export const events: SiteEvent[] = [
           lines: ["5:30 PM. MCCD 7120, McLean Centre.", "Free for every McMaster student. Register at the link in bio."],
         },
       ],
+      poster: {
+        headline: "What nobody tells you about starting young in sales.",
+        subline: "An unscripted fireside chat with Leo Puskar, award-winning RE/MAX Realtor.",
+        when: "Wednesday, November 18. 5:30 PM. MCCD 7120, McLean Centre.",
+        perks: "Free pizza until 6:00. AirPods draw at 7:00. Free for every McMaster student.",
+        scanLabel: "Scan to register",
+      },
     },
   },
   {
@@ -512,7 +525,7 @@ export const recruiting: Recruiting = {
   status: "open",
   season: "2026–27",
   opensOn: "2026-10-21",
-  closesOn: "2026-11-04",
+  closesOn: "2026-11-22",
   applyUrl: "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=B2M3RCm0rUKMJSjNSW9HcsYDRgK1N39JshRtC7O4igFUOEpKOU01NFEzWVJTTTBEN1E4QVdLUlhLSS4u",
   roles: [
     {
@@ -537,7 +550,9 @@ export const recruiting: Recruiting = {
 export const recruitingPromo = {
   /** Carousel slide 1, and the title of the story and LinkedIn image. */
   headline: "We're building the {season} MREA team.",
-  /** Carousel slide 2 lists every role with its description under this heading. */
+  /** The small line on carousel slide 1. */
+  opener: "Applications are open.",
+  /** Carousel slide 2 lists every role under this heading. */
   rolesHeading: "Open roles",
   /** The last slide and the story. The LinkedIn image shows the team page's address instead. */
   apply: "Apply by {closesOn}.",

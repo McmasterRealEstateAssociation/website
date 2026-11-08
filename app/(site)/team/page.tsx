@@ -25,10 +25,12 @@ export default function TeamPage() {
     closesOn: formatDayMonth(recruiting.closesOn),
   });
 
+  const closesLine = fill(copy.team.closesLine, { closesOn: formatDayMonth(recruiting.closesOn) });
+
   const recruitingDetails = (withApply: boolean) => (
     <>
       <p className="mt-5 text-lead font-medium">{fill(copy.team.openingSoonLead, { season: recruiting.season })}</p>
-      {!withApply && <p className="mt-2 text-white/90">{windowLine}</p>}
+      <p className="mt-2 text-white/90">{withApply ? closesLine : windowLine}</p>
       <h3 className="mt-12 text-h3 font-semibold text-gold">{copy.team.rolesHeading}</h3>
       <ul className="mt-4 border-t border-gold/40">
         {recruiting.roles.map((role) => (
